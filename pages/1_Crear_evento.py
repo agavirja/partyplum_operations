@@ -51,7 +51,6 @@ def data_labour():
     data          = pd.read_sql("SELECT id, name, cost_by_event  FROM partyplum.labour WHERE available=1" , con=db_connection)
     return data
 
-@st.cache(allow_output_mutation=True)
 def img2s3(image_file):
     principal_img =  "https://personal-data-bucket-online.s3.us-east-2.amazonaws.com/sin_imagen.png"
     session = boto3.Session(
