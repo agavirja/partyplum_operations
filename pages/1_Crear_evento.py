@@ -57,7 +57,7 @@ def img2s3(image_file):
     session = boto3.Session(
         aws_access_key_id=st.secrets["aws_access_key_id"],
         aws_secret_access_key=st.secrets["aws_secret_access_key"],
-        region_name=st.secrets["user"]
+        region_name=st.secrets["region_name"]
     )
     try:
         #s3 = boto3.client("s3")
