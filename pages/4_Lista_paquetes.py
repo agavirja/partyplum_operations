@@ -2,6 +2,7 @@ import streamlit as st
 import copy
 import pandas as pd
 import mysql.connector as sql
+import time
 from sqlalchemy import create_engine 
 from datetime import datetime
 from price_parser import Price
@@ -154,6 +155,7 @@ if tipocambio=='Añadir items':
                          
                 st.success('Datos guardados con exito')
                 
+                time.sleep(3)
                 st.experimental_memo.clear()
                 st.experimental_rerun()
          
@@ -226,5 +228,6 @@ if tipocambio=='Editar info de items':
                     
                 st.success('Datos guardados con exito')
                 
+                time.sleep(3)
                 st.experimental_memo.clear()
                 st.experimental_rerun()

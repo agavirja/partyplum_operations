@@ -7,6 +7,7 @@ import tempfile
 import mysql.connector as sql
 import boto3
 import random
+import time
 from datetime import datetime
 from bs4 import BeautifulSoup
 from sqlalchemy import create_engine 
@@ -1615,5 +1616,6 @@ if data.empty is False:
                 
                 st.success('Datos guardados con exito')
                 
+                time.sleep(3)
                 st.experimental_memo.clear()
                 st.experimental_rerun()

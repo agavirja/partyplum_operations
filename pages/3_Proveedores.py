@@ -2,6 +2,7 @@ import streamlit as st
 import copy
 import pandas as pd
 import mysql.connector as sql
+import time
 from sqlalchemy import create_engine 
 from datetime import datetime
 
@@ -160,6 +161,7 @@ if tipocambio=='Crear proveedores':
                 dataexport.to_sql('providers_historic',engine,if_exists='append', index=False) 
                 st.success('Datos guardados con exito')
                 
+                time.sleep(3)
                 st.experimental_memo.clear()
                 st.experimental_rerun()
                 
@@ -284,6 +286,7 @@ if tipocambio=='Editar información de proveedores':
                     
                     st.success('Datos guardados con exito')
                     
+                    time.sleep(3)
                     st.experimental_memo.clear()
                     st.experimental_rerun()
     else: st.error('Aun no hay informacion de proveedores')
