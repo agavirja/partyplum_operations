@@ -54,9 +54,15 @@ def data_labour():
 
 @st.experimental_memo
 def img2s3(image_file):
-    principal_img =  ''
+    principal_img =  "https://personal-data-bucket-online.s3.us-east-2.amazonaws.com/sin_imagen.png"
+    session = boto3.Session(
+        aws_access_key_id=st.secrets["aws_access_key_id"],
+        aws_secret_access_key=st.secrets["aws_secret_access_key"],
+        region_name=st.secrets["region_name"]
+    )
     try:
-        s3 = boto3.client("s3")
+        #s3 = boto3.client("s3")
+        s3 = session.client('s3')
         randomnumber = str(random.uniform(0,100)).replace('.','')[:10]
         images3name  = f'partyplum_{randomnumber}.png' 
         s3file       = f'partyplum/{images3name}'
