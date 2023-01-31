@@ -11,8 +11,7 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from sqlalchemy import create_engine 
 from price_parser import Price
-
-from pyhtml2pdf import converter
+import pdfcrowd
 
 st.set_page_config(layout="wide")
 
@@ -20,6 +19,8 @@ user     = st.secrets["user"]
 password = st.secrets["password"]
 host     = st.secrets["host"]
 schema   = st.secrets["schema"]
+pdfcrowduser = st.secrets["pdfcrowduser"]
+pdfcrowdpass = st.secrets["pdfcrowdpass"]
 
 @st.experimental_memo
 def data_plans():
@@ -1274,21 +1275,19 @@ with col1:
         with st.spinner("Generando pdf"):
     
             fd, temp_path     = tempfile.mkstemp(suffix=".html")
-            wd, pdf_temp_path = tempfile.mkstemp(suffix=".pdf")
+            wd, pdf_temp_path = tempfile.mkstemp(suffix=".pdf")       
             
-            # Escribir información en el archivo temporal
-            with open(fd, "w") as file:
-                file.write(html_struct.prettify())
-                
-            converter.convert(temp_path, pdf_temp_path)
-        
+            client = pdfcrowd.HtmlToPdfClient(pdfcrowduser,pdfcrowdpass)
+            client.convertStringToFile(html_struct, pdf_temp_path)
+
             with open(pdf_temp_path, "rb") as pdf_file:
                 PDFbyte = pdf_file.read()
-                        
+            
             st.download_button(label="Descargar PDF",
                                 data=PDFbyte,
                                 file_name="resumen_party_plum.pdf",
                                 mime='application/octet-stream')
+
 with col2:
     if st.button('Guardar Datos'):
         with st.spinner("Guardando Datos"):
