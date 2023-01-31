@@ -20,37 +20,43 @@ password = st.secrets["password"]
 host     = st.secrets["host"]
 schema   = st.secrets["schema"]
 
-@st.cache(allow_output_mutation=True,ttl=600)
+@st.experimental_memo
 def data_plans():
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
     data          = pd.read_sql("SELECT * FROM partyplum.package WHERE available=1" , con=db_connection)
     return data
 
-@st.cache(allow_output_mutation=True,ttl=600)
+@st.experimental_memo
+def data_city():
+    db_connection = sql.connect(user=user, password=password, host=host, database=schema)
+    data          = pd.read_sql("SELECT id as id_city,ciudad FROM partyplum.city" , con=db_connection)
+    return data
+
+@st.experimental_memo
 def data_products(category,id_package):
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
-    db_connection = sql.connect(user=user, password=password, host=host, database=schema)
-    data          = pd.read_sql(f"SELECT id,product,unit_value_default FROM partyplum.products_price WHERE available=1  AND category='{category}'" , con=db_connection)
-    data_products = pd.read_sql(f"SELECT id_product_price as id,amount_default  FROM partyplum.products_package WHERE  category='{category}' AND id_package={id_package}" , con=db_connection)
-    data          = data.merge(data_products,on='id',how='left',validate='1:1')    
-    #data          = pd.read_sql(f'''SELECT pp.id, pp.product, pp.unit_value_default, ppk.amount_default 
-    #                                FROM partyplum.products_price pp
-    #                                LEFT JOIN partyplum.products_package ppk ON pp.id = ppk.id_product_price
-    #                                WHERE pp.available = 1 AND pp.category = '{category}' AND ppk.category = '{category}' AND ppk.id_package = {id_package}''', con=db_connection)
+    data          = pd.read_sql(f"SELECT id_item as id, item, amount_default, unit_value_default  FROM partyplum.products_package WHERE  available=1 AND category='{category}' AND id_package={id_package}" , con=db_connection)
     return data
 
-@st.cache(allow_output_mutation=True,ttl=600)
+@st.experimental_memo
 def data_providers(category):
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
-    data          = pd.read_sql(f"SELECT id_products_price as id, name  FROM partyplum.providers WHERE available=1 AND category='{category}' " , con=db_connection)
+    data          = pd.read_sql(f"SELECT id_item as id, name  FROM partyplum.providers WHERE available=1 AND category='{category}' " , con=db_connection)
     return data
 
-@st.cache(allow_output_mutation=True,ttl=600)
+@st.experimental_memo
 def data_labour():
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
     data          = pd.read_sql("SELECT id, name, cost_by_event  FROM partyplum.labour WHERE available=1" , con=db_connection)
     return data
 
+@st.experimental_memo
+def data_event():
+    db_connection = sql.connect(user=user, password=password, host=host, database=schema)
+    data          = pd.read_sql("SELECT * FROM partyplum.events LIMIT 1" , con=db_connection)
+    return data
+
+@st.experimental_memo
 def img2s3(image_file):
     principal_img =  "https://personal-data-bucket-online.s3.us-east-2.amazonaws.com/sin_imagen.png"
     session = boto3.Session(
@@ -89,6 +95,8 @@ nombrefestejado2 = ''
 edadfestejado2   = None
 package          = data_plans()
 
+data_ciudad = data_city()
+
 col1, col2, col3 = st.columns(3)
 with col1:
     paquete_contratado = st.selectbox('Paquete',options=[x.title() for x in package['package']])         
@@ -106,12 +114,13 @@ with col1:
     
 with col2:    
     direccion          = st.text_input('Dirección evento',value='')
-    ciudad             = st.selectbox('Ciudad',options=['Bogota'])
+    ciudad             = st.selectbox('Ciudad',options=data_ciudad['ciudad'].to_list())
+    id_city            = data_ciudad[data_ciudad['ciudad']==ciudad]['id_city'].iloc[0]
     fecha              = st.date_input('Fecha celebracion')
-    iniciocelebracion  = st.selectbox('Hora inicio celebración',options=["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"])
-    horamontaje        = st.selectbox('Hora de montaje',options=["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"])
-    fecha_recogida     = st.date_input('Fecha de recogida')
-    hora_recogida      = st.selectbox('Hora de recogida',options=["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"])
+    iniciocelebracion  = st.selectbox('Hora inicio celebración',options=["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"],key=6)
+    horamontaje        = st.selectbox('Hora de montaje',options=["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"],key=2)
+    fecha_recogida     = st.date_input('Fecha de recogida',value=fecha)
+    hora_recogida      = st.selectbox('Hora de recogida',options=["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"],key=18)
 
 with col3:
     anticipo           = st.text_input('Anticipo',value='$0')
@@ -149,9 +158,9 @@ if principal_img!='':
     with col2:
         st.image(principal_img,width=300)
 
-        
 # Data Cliente Total
 clientdata = {'city':ciudad,
+              'id_city':id_city,
               'address':direccion,
               'event_day':fecha,
               'start_event':iniciocelebracion,
@@ -177,8 +186,9 @@ clientdata = {'city':ciudad,
               } 
 
 dataexport = pd.DataFrame([clientdata])
-variables  = ["id", "date_insert", "city", "address", "event_day", "start_event", "setup_time", "theme", "contracted_package", "package_value", "client", "celebrated_name", "celebrated_age", "celebrated_name2", "celebrated_age2", "occasion_celebration", "date_pick_up", "hour_pick_up", "anticipo", "fechaanticipo", "anticipo2", "fechaanticipo2", "pagofinal", "fechapagofinal", "pago_realizado", "clientdata", "purchase_order", "labour_order", "transport_order", "peajes_order", "bakery_order", "additional_order", "pagos", "principal_img","img_event"]
-variables  = [x for x in variables if x in dataexport]
+dataevents = data_event()
+#variables  = ["id", "date_insert", "city","id_city","address", "event_day", "start_event", "setup_time", "theme", "contracted_package", "package_value", "client", "celebrated_name", "celebrated_age", "celebrated_name2", "celebrated_age2", "occasion_celebration", "date_pick_up", "hour_pick_up", "anticipo", "fechaanticipo", "anticipo2", "fechaanticipo2", "pagofinal", "fechapagofinal", "pago_realizado", "clientdata", "purchase_order", "labour_order", "transport_order", "peajes_order", "bakery_order", "additional_order", "pagos", "principal_img","img_event"]
+variables  = [x for x in list(dataevents) if x in dataexport]
 dataexport = dataexport[variables]
 
 #-----------------------------------------------------------------------------#
@@ -186,13 +196,13 @@ dataexport = dataexport[variables]
 st.write('---')
 st.markdown('<p style="color: #BA5778;"><strong> Orden de compra:</strong><p>', unsafe_allow_html=True)
 
-products       = data_products(category='PAQUETES',id_package=id_package)
-providers      = data_providers(category='PAQUETES')
+products       = data_products(category='BASIC',id_package=id_package)
+providers      = data_providers(category='BASIC')
 purchase_order = []
 
 for i,items in products.iterrows():
     idcodigo   = items['id']
-    name       = items['product']
+    name       = items['item']
     amount     = items['amount_default']
     unit_value = items['unit_value_default']
     try: unit_value = float(unit_value)
@@ -241,7 +251,6 @@ for i in purchase_order:
             st.write('---')
             st.markdown('<p style="color: #BA5778;"><strong> Valor por proveedores de orden de compra:</strong><p>', unsafe_allow_html=True)
             break
-
 for i in purchase_order:
     if 'providers' in i:
         if len(i['providers'])>1:
@@ -289,7 +298,121 @@ for i in purchase_order:
                 proveedor_update = [{'providers_name':i['providers'][0],'providers_value':i['total']}]
                 i.update({'provider_by_value':proveedor_update})
     
+#-----------------------------------------------------------------------------#
+# Impresiones
+st.write('---')
+st.markdown('<p style="color: #BA5778;"><strong>Imptresiones:</strong><p>', unsafe_allow_html=True)
 
+check_item      = st.checkbox('Se incluye impresiones a medida?', value=False)
+printinfo_order = []
+printinfo_suma  = 0
+
+if check_item:
+    printinfo = data_products(category='PRINT',id_package=id_package)
+    providers = data_providers(category='PRINT')
+    for i,items in printinfo.iterrows():
+        idcodigo    = items['id']
+        name        = items['item']
+        amount      = items['amount_default']
+        unit_value  = items['unit_value_default']
+        description = ''
+        try:    amount = int(amount)
+        except: amount = 0
+        try:    unit_value = float(unit_value)
+        except: unit_value = 0
+        col1, col2, col3, col4, col5, col6 = st.columns(6)
+        with col1:
+            check_item  = st.checkbox(f'{name}', value=False)
+        if  check_item:
+            with col2:
+                cantidad = st.number_input(f'Cantidad {name}',min_value=0,value=amount)
+            with col3:
+                valorU   = st.text_input(f'Valor unitario {name}',value=f'${unit_value:,.0f}')
+                valorU   = Price.fromstring(valorU).amount_float
+            with col4:
+                total          = cantidad*valorU
+                valorTotal_str = st.text_input(f'Valor Total {name}',value=f'${total:,.0f}')
+            with col5:
+                idd = providers['id']==idcodigo
+                if sum(idd)>0:
+                    proveedor  = st.multiselect(f'Proveedor {name}',options=sorted(providers[idd]['name'].to_list()))
+            if 'ponque' in name.lower().strip() or 'shots' in name.lower().strip():
+                with col6:
+                    description   = st.text_input(f'Sabores {name}',value='')
+            printinfo_order.append({'name':name,
+                                    'id':idcodigo,
+                                    'amount':cantidad,
+                                    'unit_value':valorU,
+                                    'total':total,
+                                    'providers':proveedor,
+                                    'description':description})
+    printinfo_suma = 0
+    for i in printinfo_order:
+        if 'total' in i: 
+            printinfo_suma += i['total']
+    st.markdown(f'<p style="color: #BA5778; font-size:12px;"><strong> Subtotal repostería ${printinfo_suma:,.0f}</strong><p>', unsafe_allow_html=True)
+
+    orden_suma = orden_suma + printinfo_suma
+#-----------------------------------------------------------------------------#
+# Proovedores de impresiones
+for i in printinfo_order:
+    if 'providers' in i:
+        if  len(i['providers'])>1:
+            st.write('---')
+            st.markdown('<p style="color: #BA5778;"><strong> Valor por proveedores de repostería:</strong><p>', unsafe_allow_html=True)
+            break
+
+for i in printinfo_order:
+    if 'providers' in i:
+        if len(i['providers'])>1:
+            if 'total' in i and i['total']>0:
+                k      = int(int(i['total'])/len(i['providers']))
+                item   = ' '.join(i['name'].split('_')).title()
+                conteo = 1
+                proveedor_update     = []
+                suma_valor_proveedor = 0
+                col1, col2, col3, col4 = st.columns(4)
+                with col1: 
+                    st.write(item)
+                for nombre in i['providers']:
+                    with col2:
+                        nombre_proveedor = st.text_input(f'{item} proveedor {conteo}',value=f'{nombre}')
+                    with col3:
+                        valor_proveedor  = st.text_input(f'{item} proveedor {conteo} Valor',value=f'${int(k):,.0f}')
+                        valor_proveedor  = Price.fromstring(valor_proveedor).amount_float                        
+                        suma_valor_proveedor += valor_proveedor
+                    proveedor_update.append({'providers_name':nombre_proveedor,'providers_value':valor_proveedor})
+                    conteo += 1
+                with col4:
+                    st.write(f"Valor total {item}: ${i['total']:,.0f}")
+                    if suma_valor_proveedor>i['total']:
+                        st.error(f"Valor de proveedores de {item} mayor a ${i['total']:,.0f}")
+                    elif suma_valor_proveedor<i['total']:
+                        st.error(f"Valor de proveedores de {item} menor a ${i['total']:,.0f}")    
+                    else:
+                        st.success("Las cuentas cuadran bien")
+                i.update({'provider_by_value':proveedor_update})
+                
+        if len(i['providers'])==1:
+            col1, col2, col3, col4 = st.columns(4)
+            with col1: 
+                item   = ' '.join(i['name'].split('_')).title()
+                st.write(item)
+            with col2:
+                nombre_proveedor = st.text_input(f'{item} proveedor',value=f"{i['providers'][0]}")
+            with col3:
+                valor_proveedor  = st.text_input(f'{item} proveedor Valor',value=f"${i['total']:,.0f}")
+                valor_proveedor  = Price.fromstring(valor_proveedor).amount_float
+                
+            if 'total' in i and i['total']>0:
+                item             = ' '.join(i['name'].split('_')).title()
+                proveedor_update = [{'providers_name':i['providers'][0],'providers_value':i['total']}]
+                i.update({'provider_by_value':proveedor_update})
+   
+    
+purchase_order = purchase_order + printinfo_order
+
+  
 #-----------------------------------------------------------------------------#
 # Personal
 st.write('---')
@@ -390,7 +513,7 @@ if check_item:
     providers = data_providers(category='BAKERY')
     for i,items in bakery.iterrows():
         idcodigo    = items['id']
-        name        = items['product']
+        name        = items['item']
         amount      = items['amount_default']
         unit_value  = items['unit_value_default']
         description = ''
@@ -509,7 +632,7 @@ if check_item:
     providers  = data_providers(category='ADDITIONAL')
     for i,items in additional.iterrows():
         idcodigo = items['id']
-        name     = items['product']
+        name     = items['item']
         col1, col2, col3 = st.columns(3)
         with col1:
             additionalcheck = False
@@ -1185,13 +1308,14 @@ with col2:
             dataexport.to_sql('events',engine,if_exists='append', index=False)
             
             db_connection = sql.connect(user=user, password=password, host=host, database=schema)
-            lastid        = pd.read_sql("SELECT MAX(id) as id_event FROM partyplum.package" , con=db_connection)
+            lastid        = pd.read_sql("SELECT MAX(id) as id_event FROM partyplum.events" , con=db_connection)
             if lastid.empty is False:
                 id_event = lastid['id_event'].iloc[0]
                 dataexport['id_events'] = id_event
                 
                 engine   = create_engine(f'mysql+mysqlconnector://{user}:{password}@{host}/{schema}')
                 dataexport.to_sql('events_historic',engine,if_exists='append', index=False)
-                
-            st.success('Datos guardados con exito')
             
+            st.success('Datos guardados con exito')
+            st.experimental_memo.clear()
+            st.experimental_rerun()

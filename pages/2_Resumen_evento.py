@@ -21,44 +21,37 @@ password = st.secrets["password"]
 host     = st.secrets["host"]
 schema   = st.secrets["schema"]
 
-@st.cache(allow_output_mutation=True,ttl=600)
+@st.experimental_memo
 def data_event(id_event):
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
     data          = pd.read_sql(f"SELECT * FROM partyplum.events WHERE id={id_event}" , con=db_connection)
     return data
 
-@st.cache(allow_output_mutation=True,ttl=600)
+@st.experimental_memo
 def data_plans():
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
     data          = pd.read_sql("SELECT * FROM partyplum.package WHERE available=1" , con=db_connection)
     return data
 
-@st.cache(allow_output_mutation=True,ttl=600)
+@st.experimental_memo
 def data_products(category,id_package):
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
-    db_connection = sql.connect(user=user, password=password, host=host, database=schema)
-    data          = pd.read_sql(f"SELECT id,product,unit_value_default FROM partyplum.products_price WHERE available=1  AND category='{category}'" , con=db_connection)
-    data_products = pd.read_sql(f"SELECT id_product_price as id,amount_default  FROM partyplum.products_package WHERE  category='{category}' AND id_package={id_package}" , con=db_connection)
-    data          = data.merge(data_products,on='id',how='left',validate='1:1')    
-    #data          = pd.read_sql(f'''SELECT pp.id, pp.product, pp.unit_value_default, ppk.amount_default 
-    #                                FROM partyplum.products_price pp
-    #                                LEFT JOIN partyplum.products_package ppk ON pp.id = ppk.id_product_price
-    #                                WHERE pp.available = 1 AND pp.category = '{category}' AND ppk.category = '{category}' AND ppk.id_package = {id_package}''', con=db_connection)
+    data          = pd.read_sql(f"SELECT id_item as id, item, amount_default, unit_value_default  FROM partyplum.products_package WHERE  available=1 AND category='{category}' AND id_package={id_package}" , con=db_connection)
     return data
 
-@st.cache(allow_output_mutation=True,ttl=600)
+@st.experimental_memo
 def data_providers(category):
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
-    data          = pd.read_sql(f"SELECT id_products_price as id, name  FROM partyplum.providers WHERE available=1 AND category='{category}' " , con=db_connection)
+    data          = pd.read_sql(f"SELECT id_item as id, name  FROM partyplum.providers WHERE available=1 AND category='{category}' " , con=db_connection)
     return data
 
-@st.cache(allow_output_mutation=True,ttl=600)
+@st.experimental_memo
 def data_labour():
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
     data          = pd.read_sql("SELECT id, name, cost_by_event  FROM partyplum.labour WHERE available=1" , con=db_connection)
     return data
 
-@st.cache(allow_output_mutation=True)
+@st.experimental_memo
 def img2s3(image_file):
     principal_img =  ''
     try:
@@ -84,9 +77,12 @@ if 'id_event' in args:
     except: id_event = ''
 
 #id_event = 2
-data      = data_event(id_event)
+data         = pd.DataFrame()
+checkvalues  = False
+try:    data = data_event(id_event)
+except: st.error('Es necesario un id del evento, ir a buscar evento')
+
 if data.empty is False:
-    
     #-------------------------------------------------------------------------#
     # Estructura de data
     try:    clientdata       = json.loads(data['clientdata'].iloc[0])
@@ -155,6 +151,7 @@ if data.empty is False:
     with col2:    
         direccion          = st.text_input('Dirección evento',value=clientdata["address"] )
         ciudad             = st.text_input('Ciudad',value=clientdata["city"] )
+        id_city            = clientdata["id_city"]
         fecha              = st.date_input('Fecha celebracion',value=data["event_day"].iloc[0])
         iniciocelebracion  = st.text_input('Hora inicio celebración',value=clientdata["start_event"])
         horamontaje        = st.text_input('Hora de montaje',value=clientdata["setup_time"])
@@ -197,6 +194,7 @@ if data.empty is False:
     
     # Data Cliente Total
     clientdata = {'city':ciudad,
+                  'id_city':id_city,
                   'address':direccion,
                   'event_day':fecha,
                   'start_event':iniciocelebracion,
@@ -387,8 +385,14 @@ if checkvalues and data.empty is False:
     st.write('---')
     st.markdown('<p style="color: #BA5778;"><strong> Orden de compra:</strong><p>', unsafe_allow_html=True)
     
-    products       = data_products(category='PAQUETES',id_package=id_package)
-    providers      = data_providers(category='PAQUETES')
+    products       = data_products(category='BASIC',id_package=id_package)
+    printdata      = data_products(category='PRINT',id_package=id_package)
+    products       = products.append(printdata)
+    
+    providers      = data_providers(category='BASIC')
+    printproviders = data_providers(category='PRINT')
+    providers      = providers.append(printproviders)
+    
     purchase_paso  = copy.deepcopy(purchase_origen)
     purchase_order = []
     
@@ -400,7 +404,7 @@ if checkvalues and data.empty is False:
     for i,items in products.iterrows():
         if items['id'] not in idlist:
             purchase_paso.append({
-                'name':items['product'],
+                'name':items['item'],
                 'id':items['id'],
                 'amount':items['amount_default'],
                 'unit_value':items['unit_value_default'],
@@ -461,70 +465,6 @@ if checkvalues and data.empty is False:
         if 'total' in i: 
             orden_suma += i['total']
     st.markdown(f'<p style="color: #BA5778; font-size:12px;"><strong> Subtotal orden de pedido ${orden_suma:,.0f}</strong><p>', unsafe_allow_html=True)
-    
-
-    #-------------------------------------------------------------------------#
-    # Proovedores orden de compra
-    for i in purchase_order:
-        if 'providers' in i:
-            if  len(i['providers'])>1:
-                st.write('---')
-                st.markdown('<p style="color: #BA5778;"><strong> Valor por proveedores de orden de compra:</strong><p>', unsafe_allow_html=True)
-                break
-    
-    for i in purchase_order:
-        for j in purchase_paso:
-            if ('id' in i and 'id' in j) and (i['id'] is not None and j['id'] is not None) and int(i['id'])==int(j['id']):
-                if 'provider_by_value' not in i: i['provider_by_value'] = []
-                if 'provider_by_value' in j:
-                    i['provider_by_value'] = copy.deepcopy(j['provider_by_value'])
-                    break
-                
-    for i in purchase_order:
-        if 'providers' in i:
-            if len(i['providers'])>1:
-                if 'total' in i and i['total']>0:
-                    item   = ' '.join(i['name'].split('_')).title()
-                    conteo = 1
-                    proveedor_update     = []
-                    suma_valor_proveedor = 0
-                    col1, col2, col3 = st.columns(3)
-                    with col1: 
-                        st.write(item)
-                    for nombre in i['providers']:
-                        with col2:
-                            nombre_proveedor = st.text_input(f'{item} proveedor {conteo}',value=f'{nombre}')
-                        with col3:
-                            value = 0
-                            if 'provider_by_value' in i and i['provider_by_value'] is not None and i['provider_by_value']!=[]:
-                                for pbv in i['provider_by_value']:
-                                    if pbv['providers_name'].lower().strip()==nombre.lower().strip():
-                                        if 'providers_value' in pbv:
-                                            value = pbv['providers_value']
-                                            break
-    
-                            valor_proveedor  = st.text_input(f'{item} proveedor {conteo} Valor',value=f'${value:,.0f}')
-                            valor_proveedor  = Price.fromstring(valor_proveedor).amount_float
-                            suma_valor_proveedor += valor_proveedor
-                        proveedor_update.append({'providers_name':nombre_proveedor,'providers_value':valor_proveedor})
-                        conteo += 1
-                    i.update({'provider_by_value':proveedor_update})
-                    
-            if len(i['providers'])==1:
-                col1, col2, col3 = st.columns(3)
-                with col1: 
-                    item   = ' '.join(i['name'].split('_')).title()
-                    st.write(item)
-                with col2:
-                    nombre_proveedor = st.text_input(f'{item} proveedor',value=f"{i['providers'][0]}")
-                with col3:
-                    valor_proveedor  = st.text_input(f'{item} proveedor Valor',value=f"${i['total']:,.0f}")
-                    valor_proveedor  = Price.fromstring(valor_proveedor).amount_float
-                            
-                if 'total' in i and i['total']>0:
-                    item             = ' '.join(i['name'].split('_')).title()
-                    proveedor_update = [{'providers_name':i['providers'][0],'providers_value':valor_proveedor}]
-                    i.update({'provider_by_value':proveedor_update})
     
     #-------------------------------------------------------------------------#
     # Personal
@@ -687,7 +627,7 @@ if checkvalues and data.empty is False:
         for i,items in bakery.iterrows():
             if items['id'] not in idlist:
                 bakery_paso.append({
-                    'name':items['product'],
+                    'name':items['item'],
                     'id':items['id'],
                     'amount':items['amount_default'],
                     'unit_value':items['unit_value_default'],
@@ -846,7 +786,7 @@ if checkvalues and data.empty is False:
         for i,items in additional.iterrows():
             if items['id'] not in idlist:
                 additional_paso.append({
-                    'name':items['product'],
+                    'name':items['item'],
                     'id':items['id'],
                     'amount':items['amount_default'],
                     'total':0,
@@ -1647,9 +1587,7 @@ if data.empty is False:
                 dataexport.loc[0,'pagos']            = pd.io.json.dumps(pagos)
                 dataexport.loc[0,'clientdata']       = pd.io.json.dumps(clientdata)
                 dataexport.loc[0,'img_event']        = img_event
-                
-                if 'id' in dataexport: del dataexport['id']
-                
+
                 # Guardar una copia en datos historicos
                 data2historic              = copy.deepcopy(dataexport)
                 data2historic['id_events'] = id_event
@@ -1676,3 +1614,6 @@ if data.empty is False:
                 db_connection.close()
                 
                 st.success('Datos guardados con exito')
+                
+                st.experimental_memo.clear()
+                st.experimental_rerun()
