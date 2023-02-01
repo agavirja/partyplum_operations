@@ -109,13 +109,12 @@ data_ciudad      = data_city()
 col1, col2, col3 = st.columns(3)
 with col1:
 
-    valueclient = ''
     if data_form.empty is False: 
         valueclient = sorted(data_form['client'].unique())+['Otro']
-        cliente     = st.selectbox('Cliente',value=valueclient)
+        cliente     = st.selectbox('Cliente',options=valueclient)
         if cliente=='Otro':
-            cliente = st.selectbox('Nombre del cliente',value='')
-    else: cliente = st.text_input('Cliente',value=valueclient)
+            cliente = st.text_input('Nombre del cliente',value='')
+    else: cliente = st.text_input('Cliente',value='')
     
     
     paquete_contratado_options = [x.title() for x in package['package']]       
