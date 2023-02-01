@@ -62,7 +62,7 @@ def data_event():
 @st.experimental_memo
 def data_event_client():
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
-    data          = pd.read_sql("SELECT client,clientdata FROM partyplum.events" , con=db_connection)
+    data          = pd.read_sql("SELECT client,clientdata,event_day,date_pick_up FROM partyplum.events" , con=db_connection)
     return data
 
 @st.experimental_memo
@@ -151,7 +151,9 @@ with col1:
             hora_recogida_options.remove(preform['hour_pick_up'])
             hora_recogida_options = [preform['hour_pick_up']] + hora_recogida_options
         except: hora_recogida_options = [preform['hour_pick_up']]
-            
+        
+        event_day_option        = data_form[idd]['event_day'].iloc[0]
+        date_pick_up_option     = data_form[idd]['date_pick_up'].iloc[0]
         tematica_options        = preform['theme']
         nombrefestejado_options = preform['celebrated_name']
         edadfestejado_options   = preform['celebrated_age']
@@ -173,11 +175,12 @@ with col2:
     direccion          = st.text_input('Dirección evento',value=direccion_options)
     ciudad             = st.selectbox('Ciudad',options=ciudad_options)
     id_city            = data_ciudad[data_ciudad['ciudad']==ciudad]['id_city'].iloc[0]
-    try:    fecha      = st.date_input('Fecha celebracion',preform['event_day'])
+    try:    fecha      = st.date_input('Fecha celebracion',value=event_day_option)
     except: fecha      = st.date_input('Fecha celebracion')
     iniciocelebracion  = st.selectbox('Hora inicio celebración',options=iniciocelebracion_options)
     horamontaje        = st.selectbox('Hora de montaje',options=["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"],key=2)
-    fecha_recogida     = st.date_input('Fecha de recogida',value=fecha)
+    try:    fecha_recogida = st.date_input('Fecha de recogida',value=date_pick_up_option)
+    except: fecha_recogida = st.date_input('Fecha de recogida',value=fecha)
     hora_recogida      = st.selectbox('Hora de recogida',options=["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"],key=18)
 
 with col3:
