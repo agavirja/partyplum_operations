@@ -345,7 +345,7 @@ if data.empty is False:
                 options = [i['expensestype']]+options
                 tipogasto = st.selectbox(f'Quien asume el gasto {id_codigo}',options=options)
             with col4:
-                description = st.text_input(f'Descripción del gasto {id_codigo}',value=f"{i['description']}")
+                description = st.text_area(f'Descripción del gasto {id_codigo}',value=f"{i['description']}")
             if total>0: 
                 showimg = True
                 other_expenses.append({
@@ -369,7 +369,7 @@ if data.empty is False:
             with col3:
                 tipogasto = st.selectbox(f'Quien asume el gasto {maxidcount}',options=["Party Plum","Cliente"])
             with col4:
-                description = st.text_input(f'Descripción del gasto {maxidcount}',value='')
+                description = st.text_area(f'Descripción del gasto {maxidcount}',value='')
             if total>0: 
                 showimg = True
                 other_expenses.append({
@@ -458,7 +458,7 @@ if checkvalues and data.empty is False:
                 proveedor  = st.multiselect(f'Proveedor {name}',options=proveedor_vector,default=proveedor_default)
             if name.lower().strip()=='globos' or 'flores' in name.lower().strip():
                 with col6:
-                    description   = st.text_input(f'Pedido {name}',value=description)
+                    description   = st.text_area(f'Pedido {name}',value=description)
                             
             purchase_order.append({'name':name,
                                    'id':idcodigo,
@@ -684,7 +684,7 @@ if checkvalues and data.empty is False:
                     proveedor  = st.multiselect(f'Proveedor {name}',options=proveedor_vector,default=proveedor_default)
                 if 'ponque' in name.lower().strip() or 'shots' in name.lower().strip():
                     with col6:
-                        description   = st.text_input(f'Sabores {name}',value=description)
+                        description   = st.text_area(f'Sabores {name}',value=description)
                 bakery_order.append({'name':name,
                                         'id':idcodigo,
                                         'amount':cantidad,

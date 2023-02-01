@@ -288,7 +288,7 @@ for i,items in products.iterrows():
                 proveedor  = st.multiselect(f'Proveedor {name}',options=sorted(providers[idd]['name'].to_list()))
         if name.lower().strip()=='globos' or 'flores' in name.lower().strip() :
             with col6:
-                description   = st.text_input(f'Pedido {name}',value='')
+                description   = st.text_area(f'Pedido {name}',value='')
                         
         purchase_order.append({'name':name,
                                'id':idcodigo,
@@ -398,7 +398,7 @@ if check_item:
                     proveedor  = st.multiselect(f'Proveedor {name}',options=sorted(providers[idd]['name'].to_list()))
             if 'ponque' in name.lower().strip() or 'shots' in name.lower().strip():
                 with col6:
-                    description   = st.text_input(f'Sabores {name}',value='')
+                    description   = st.text_area(f'Sabores {name}',value='')
             printinfo_order.append({'name':name,
                                     'id':idcodigo,
                                     'amount':cantidad,
@@ -600,7 +600,7 @@ if check_item:
                     proveedor  = st.multiselect(f'Proveedor {name}',options=sorted(providers[idd]['name'].to_list()))
             if 'ponque' in name.lower().strip() or 'shots' in name.lower().strip():
                 with col6:
-                    description   = st.text_input(f'Sabores {name}',value='')
+                    description   = st.text_area(f'Sabores {name}',value='')
             bakery_order.append({'name':name,
                                     'id':idcodigo,
                                     'amount':cantidad,
