@@ -130,7 +130,6 @@ with col1:
     idd = data_form['client']==cliente
     if sum(idd)>0:
         preform = json.loads(data_form[idd]['clientdata'].iloc[0])
-
         try:
             paquete_contratado_options.remove(preform['contracted_package'])
             paquete_contratado_options = [preform['contracted_package']]+paquete_contratado_options
@@ -270,7 +269,8 @@ for i,items in products.iterrows():
     except: pass
     proveedor   = []
     description = ''
-    col1, col2, col3, col4, col5, col6 = st.columns([1,2,2,2,2,3])
+    #col1, col2, col3, col4, col5, col6 = st.columns([1,2,2,2,2,3])
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
     with col1: 
         check_products = st.checkbox(f'{name}', value=True)
     if check_products:
@@ -297,7 +297,6 @@ for i,items in products.iterrows():
                                'total':total,
                                'providers':proveedor,
                                'description':description})
-
 orden_suma = 0
 for i in purchase_order:
     if 'total' in i: 
@@ -469,8 +468,8 @@ for i in printinfo_order:
                 item             = ' '.join(i['name'].split('_')).title()
                 proveedor_update = [{'providers_name':i['providers'][0],'providers_value':i['total']}]
                 i.update({'provider_by_value':proveedor_update})
-   
-    
+
+# Impresiones va en la parte de basicos
 purchase_order = purchase_order + printinfo_order
 
   
@@ -488,7 +487,8 @@ for i,items in labour.iterrows():
     cost_by_event = items['cost_by_event']
     try: cost_by_event = float(cost_by_event)
     except: pass
-    col1, col2, col3, col4 = st.columns([1,2,2,2])
+    #col1, col2, col3, col4 = st.columns([1,2,2,2])
+    col1, col2, col3, col4 = st.columns(4)
     with col1: 
         check_labour = st.checkbox(f'{name}', value=False)
     if check_labour:

@@ -58,12 +58,16 @@ iddcountry        = data_ciudad.index>=0
 id_region_put = 1
 region_put    = 'Bogota y alrededores'
  
-col1,col2,col3,col4,col5 = st.columns(5)
+col1,col2,col3 = st.columns(3)
+
 with col1:
+    tipocambio = st.selectbox('Cambiar o agregar',options=['Ninguno','Editar información de proveedores','Crear proveedores'])
+
+with col2:
     pais       = st.selectbox('País',options=sorted(data_ciudad["country"].unique()))
     iddcountry = (iddcountry) & (data_ciudad['country']==pais)
         
-with col2:
+with col3:
     options = ['All'] + sorted(data_ciudad[iddcountry]["region"].unique())
     region  = st.selectbox('Región',options=options)
     if region!='All':
@@ -71,17 +75,16 @@ with col2:
         region_put = data_ciudad[data_ciudad['region']==region]['region'].iloc[0]
         idd     = (idd) & (products['id_region']==id_region)
         
-with col3:
-    tipocambio = st.selectbox('Cambiar o agregar',options=['Ninguno','Editar información de proveedores','Crear proveedores'])
 
 if tipocambio=='Editar información de proveedores' and data_proveedores.empty is False:
-    with col4:
+    col1,col2,col3 = st.columns(3)
+    with col1:
         options = ['All'] + sorted(data_proveedores['name'].unique())
         nombre_proveedor = st.selectbox('Nombre del proveedor',options=options)
         if nombre_proveedor!='All':
             data_proveedores = data_proveedores[data_proveedores['name']==nombre_proveedor]
             
-    with col5:
+    with col2:
         options = ['All'] + sorted(products[idd]['cat_spn'].unique())
         tipocategoria = st.selectbox('Categoria',options=options)
         if tipocategoria!='All':

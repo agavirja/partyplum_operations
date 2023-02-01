@@ -45,34 +45,35 @@ data_ciudad         = data_city()
 data_ciudad.index   = range(len(data_ciudad))
 iddcountry          = data_ciudad.index>=0
 
-col1,col2,col3,col4,col5,col6 = st.columns(6)
+col1,col2,col3 = st.columns(3)
 with col1:
+    tipocambio = st.selectbox('Cambiar o agregar',options=['Seleccionar','Editar info de items','Añadir items'])
+    
+with col2:
     pais       = st.selectbox('País',options=sorted(data_ciudad["country"].unique()))
     iddcountry = (iddcountry) & (data_ciudad['country']==pais)
         
-with col2:
+with col3:
     region  = st.selectbox('Región',options=sorted(data_ciudad[iddcountry]["region"].unique()))
     if region!='All':
         id_region = data_ciudad[data_ciudad['region']==region]['id_region'].iloc[0]
         idd     = (idd) & (products['id_region']==id_region)
-        
-with col3:
-    tipocambio = st.selectbox('Cambiar o agregar',options=['Seleccionar','Editar info de items','Añadir items'])
-    
+
 if tipocambio=='Editar info de items':
-    with col4:
+    col1,col2,col3 = st.columns(3)
+    with col1:
         options = ['All'] + sorted(products[idd]['package'].unique())
         paquete = st.selectbox('Paquete',options=options)
         if paquete!='All':
             idd = (idd) & (products['package']==paquete)
     
-    with col5:
+    with col2:
         options  = ['All'] + sorted(products[idd]['cat_spn'].unique())
         categoria = st.selectbox('Categoria',options=options)
         if categoria!='All':
             idd = (idd) & (products['cat_spn']==categoria)
             
-    with col6:
+    with col3:
         options  = ['All'] + sorted(products[idd]['item'].unique())
         producto = st.selectbox('Item',options=options)
         if producto!='All':
