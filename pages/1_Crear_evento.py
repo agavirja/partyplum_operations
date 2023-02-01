@@ -110,7 +110,7 @@ col1, col2, col3 = st.columns(3)
 with col1:
 
     if data_form.empty is False: 
-        valueclient = sorted(data_form['client'].unique())+['NUEVO CLIENTE']
+        valueclient = ['NUEVO CLIENTE']+sorted(data_form['client'].unique())
         cliente     = st.selectbox('Cliente',options=valueclient)
         if cliente=='NUEVO CLIENTE':
             cliente = st.text_input('Nombre del cliente',value='')
