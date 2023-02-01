@@ -150,7 +150,7 @@ if clients.empty is False:
         dateevent          =  inputval['event_day']
         imagenes += f'''
               <div class="event-block">
-                <a href="https://agavirja-partyplum-operations-home-j1ax6o.streamlit.app/Resumen_evento?id_event={id_event}" target="_blank">
+                <a href="https://partyplum-operations.streamlit.app//Resumen_evento?id_event={id_event}" target="_blank">
                 <div class="event-image">
                   <img src="{imagen_principal}" alt="event image" onerror="this.src='https://personal-data-bucket-online.s3.us-east-2.amazonaws.com/sin_imagen.png';">
                 </div>
