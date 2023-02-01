@@ -1,4 +1,5 @@
 import streamlit as st
+import json
 import pandas as pd
 import re
 import copy
@@ -59,6 +60,12 @@ def data_event():
     return data
 
 @st.experimental_memo
+def data_event_client():
+    db_connection = sql.connect(user=user, password=password, host=host, database=schema)
+    data          = pd.read_sql("SELECT client,clientdata FROM partyplum.events" , con=db_connection)
+    return data
+
+@st.experimental_memo
 def img2s3(image_file):
     principal_img =  "https://personal-data-bucket-online.s3.us-east-2.amazonaws.com/sin_imagen.png"
     session = boto3.Session(
@@ -96,30 +103,87 @@ pagofinal        = 0
 nombrefestejado2 = ''
 edadfestejado2   = None
 package          = data_plans()
-
-data_ciudad = data_city()
+data_form        = data_event_client()
+data_ciudad      = data_city()
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    paquete_contratado = st.selectbox('Paquete',options=[x.title() for x in package['package']])         
+
+    valueclient = ''
+    if data_form.empty is False: 
+        valueclient = sorted(data_form['client'].unique())+['Otro']
+        cliente     = st.selectbox('Cliente',value=valueclient)
+        if cliente=='Otro':
+            cliente = st.selectbox('Nombre del cliente',value='')
+    else: cliente = st.text_input('Cliente',value=valueclient)
+    
+    
+    paquete_contratado_options = [x.title() for x in package['package']]       
+    tematica_options           = ''
+    ocacioncelebracion_options = ['CUMPLEAÑOS','PRIMERA COMUNIÓN','BAUTIZO','GRADO','BABY SHOWER','QUINCEAÑERA','DESPEDIDA DE SOLTERO(A)','SHOWER']
+    nombrefestejado_options    = ''
+    edadfestejado_options      = 0
+    direccion_options          = ''
+    ciudad_options             = data_ciudad['ciudad'].to_list()
+    iniciocelebracion_options  = ["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"]
+    hora_recogida_options      = ["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"]
+    
+    
+    idd = data_form['client']==cliente
+    if sum(idd)>0:
+        preform = json.loads(data_form[idd]['clientdata'].iloc[0])
+
+        try:
+            paquete_contratado_options.remove(preform['contracted_package'])
+            paquete_contratado_options = [preform['contracted_package']]+paquete_contratado_options
+        except: paquete_contratado_options = [preform['contracted_package']]
+        
+        
+        try:
+            ocacioncelebracion_options.remove(preform['occasion_celebration'])
+            ocacioncelebracion_options = [preform['occasion_celebration']]+ocacioncelebracion_options
+        except: ocacioncelebracion_options = [preform['occasion_celebration']]
+        
+        try:
+            ciudad_options.remove(preform['city'])
+            ciudad_options  = [preform['city']] + ciudad_options
+        except: ciudad_options = [preform['city']]
+        
+        try:
+            iniciocelebracion_options.remove(preform['start_event'])
+            iniciocelebracion_options =  [preform['start_event']] + iniciocelebracion_options
+        except: iniciocelebracion_options = [preform['start_event']]
+            
+        try:
+            hora_recogida_options.remove(preform['hour_pick_up'])
+            hora_recogida_options = [preform['hour_pick_up']] + hora_recogida_options
+        except: hora_recogida_options = [preform['hour_pick_up']]
+            
+        tematica_options           = preform['theme']
+        nombrefestejado_options    = preform['celebrated_name']
+        edadfestejado_options      = preform['celebrated_age']
+        direccion_options          = preform['address']
+        
+
+    paquete_contratado = st.selectbox('Paquete',options=paquete_contratado_options)         
     valorpaquete       = package[package['package']==paquete_contratado.upper()]['price'].iloc[0]
     valorpaquete       = st.text_input('Valor',value=f'${valorpaquete:,.0f}')
     valorpaquete       = Price.fromstring(valorpaquete).amount_float    
-    tematica           = st.text_input('Temática',value='')    
-    ocacioncelebracion = st.selectbox('Ocasión de Celebración',options=['CUMPLEAÑOS','PRIMERA COMUNIÓN','BAUTIZO','GRADO','BABY SHOWER','QUINCEAÑERA','DESPEDIDA DE SOLTERO(A)','SHOWER'])
-    cliente            = st.text_input('Cliente',value='')     
-    nombrefestejado    = st.text_input('Nombre del festejado',value='') 
-    edadfestejado      = st.number_input('Edad festejado',min_value=0,value=3)
+    tematica           = st.text_input('Temática',value=tematica_options)    
+    ocacioncelebracion = st.selectbox('Ocasión de Celebración',options=ocacioncelebracion_options)
+    nombrefestejado    = st.text_input('Nombre del festejado',value=nombrefestejado_options) 
+    edadfestejado      = st.number_input('Edad festejado',min_value=0,value=edadfestejado_options)
     if st.checkbox('Otro festejado', value=False):
         nombrefestejado2   = st.text_input('Nombre del festejado 2',value='')
         edadfestejado2     = st.number_input('Edad festejado 2',min_value=0)
     
 with col2:    
-    direccion          = st.text_input('Dirección evento',value='')
-    ciudad             = st.selectbox('Ciudad',options=data_ciudad['ciudad'].to_list())
+    direccion          = st.text_input('Dirección evento',value=direccion_options)
+    ciudad             = st.selectbox('Ciudad',options=ciudad_options)
     id_city            = data_ciudad[data_ciudad['ciudad']==ciudad]['id_city'].iloc[0]
-    fecha              = st.date_input('Fecha celebracion')
-    iniciocelebracion  = st.selectbox('Hora inicio celebración',options=["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"],key=6)
+    try:    fecha      = st.date_input('Fecha celebracion',preform['event_day'])
+    except: fecha      = st.date_input('Fecha celebracion')
+    iniciocelebracion  = st.selectbox('Hora inicio celebración',options=iniciocelebracion_options)
     horamontaje        = st.selectbox('Hora de montaje',options=["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"],key=2)
     fecha_recogida     = st.date_input('Fecha de recogida',value=fecha)
     hora_recogida      = st.selectbox('Hora de recogida',options=["07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM", "10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"],key=18)
