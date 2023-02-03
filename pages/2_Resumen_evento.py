@@ -54,6 +54,12 @@ def data_labour():
     return data
 
 @st.experimental_memo
+def data_event_client():
+    db_connection = sql.connect(user=user, password=password, host=host, database=schema)
+    data          = pd.read_sql("SELECT id as id_event,client,contracted_package,event_day,theme,celebrated_name,celebrated_name2 FROM partyplum.events" , con=db_connection)
+    return data
+
+@st.experimental_memo
 def img2s3(image_file):
     principal_img =  "https://personal-data-bucket-online.s3.us-east-2.amazonaws.com/sin_imagen.png"
     session = boto3.Session(
@@ -79,12 +85,34 @@ def img2s3(image_file):
     except: pass
     return principal_img
 
-args = st.experimental_get_query_params()
+id_event = ''
+args     = st.experimental_get_query_params()
 if 'id_event' in args: 
     try:    id_event = int(args['id_event'][0])
     except: id_event = ''
+else: id_event = ''
 
-#id_event = 2
+if id_event=='':
+    data_clientes       = data_event_client()
+    data_clientes.index = range(len(data_clientes))
+    idd                 = data_clientes.index>=0
+    with st.sidebar:
+        clientfilter  = st.selectbox('Nombre del cliente',options=sorted(data_clientes['client'].unique()))
+        idd           = (idd) & (data_clientes['client']==clientfilter)
+        packagefilter = st.selectbox('Paquete contratado',options=sorted(data_clientes[idd]['contracted_package'].unique()))
+        idd        = (idd) & (data_clientes['contracted_package']==packagefilter)
+
+        temafilter = st.selectbox('Tema del evento',options=sorted(data_clientes[idd]['theme'].unique()))
+        idd        = (idd) & (data_clientes['theme']==temafilter)
+
+        lista = list(data_clientes[idd]['celebrated_name'].unique()) +  list(data_clientes[idd]['celebrated_name2'].unique())
+        lista = [x for x in list(set(lista)) if isinstance(x, str) and len(x)>2]
+        celebratedfilter = st.selectbox('Nombre del celebrado',options=sorted(lista))
+        idd              = (idd) & ((data_clientes['contracted_package']==celebratedfilter) | (data_clientes['celebrated_name2']==celebratedfilter))
+        
+        id_event = data_clientes[idd]['id_event'].iloc[0]
+
+
 data         = pd.DataFrame()
 checkvalues  = False
 try:    data = data_event(id_event)
@@ -139,12 +167,12 @@ if data.empty is False:
 
     col1, col2, col3 = st.columns(3)
     with col1:
+        cliente            = st.text_input('Cliente',value=clientdata["client"]) 
         paquete_contratado = st.text_input('Paquete',value=clientdata['contracted_package'])         
         valorpaquete       = st.text_input('Valor',value=f'${clientdata["package_value"]:,.0f}')
         valorpaquete       = Price.fromstring(valorpaquete).amount_float    
         tematica           = st.text_input('Temática',value=clientdata["theme"])    
         ocacioncelebracion = st.text_input('Ocasión de Celebración',value=clientdata["occasion_celebration"])
-        cliente            = st.text_input('Cliente',value=clientdata["client"])     
         nombrefestejado    = st.text_input('Nombre del festejado',value=clientdata["celebrated_name"]) 
         
         try:    edadfestejado = int(clientdata['celebrated_age'])
