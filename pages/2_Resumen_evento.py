@@ -110,6 +110,8 @@ if id_event=='':
         celebratedfilter = st.selectbox('Nombre del celebrado',options=sorted(lista))
         idd              = (idd) & ((data_clientes['contracted_package']==celebratedfilter) | (data_clientes['celebrated_name2']==celebratedfilter))
         
+        st.dataframe(data_clientes[idd])
+        st.write(data_clientes[idd]['id_event'].iloc[0])
         id_event = data_clientes[idd]['id_event'].iloc[0]
 
 

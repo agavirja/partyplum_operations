@@ -62,7 +62,8 @@ if clients.empty is False:
     with col4:
         options = ['All']
         if sum(clients[idd]['celebrated_name2'].notnull())>0:
-            options=options+sorted(clients[idd]['celebrated_name2'].unique())
+            try:    options = options+sorted(clients[idd]['celebrated_name2'].unique())
+            except: options = []
         celebrated_name2 = st.selectbox('Nombre del festejado 2',options=options)
         if celebrated_name2!='All':    
             idd = (idd) & (clients['celebrated_name2']==celebrated_name2)
