@@ -105,8 +105,8 @@ if id_event=='':
         temafilter = st.selectbox('Tema del evento',options=sorted(data_clientes[idd]['theme'].unique()))
         idd        = (idd) & (data_clientes['theme']==temafilter)
 
-        celebratedfilter = st.selectbox('Nombre del celebrado',options=sorted(data_clientes[idd]['celebrated_name'].unique()))
-        idd              = (idd) & (data_clientes['contracted_package']==celebratedfilter)
+        #celebratedfilter = st.selectbox('Nombre del celebrado',options=sorted(data_clientes[idd]['celebrated_name'].unique()))
+        #idd              = (idd) & (data_clientes['contracted_package']==celebratedfilter)
         
         st.dataframe(data_clientes[idd])
         st.write(data_clientes[idd]['id_event'].iloc[0])
