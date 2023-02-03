@@ -19,6 +19,7 @@ schema   = st.secrets["schema"]
 def data_clients():
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
     data          = pd.read_sql("SELECT id,city,event_day,theme,contracted_package,client,celebrated_name,celebrated_name2,principal_img FROM partyplum.events" , con=db_connection)
+    data['event_day'] = pd.to_datetime(data['event_day'],errors='coerce')
     return data
 
 #-----------------------------------------------------------------------------#
@@ -27,7 +28,7 @@ def data_clients():
 clients = data_clients()
 
 clients.index = range(len(clients))
-idd = clients.index>=0
+idd           = clients.index>=0
 
 if clients.empty is False:
     col1, col2, col3, col4 = st.columns(4)
@@ -63,7 +64,7 @@ if clients.empty is False:
         options = ['All']
         if sum(clients[idd]['celebrated_name2'].notnull())>0:
             try:    options = options+sorted(clients[idd]['celebrated_name2'].unique())
-            except: options = []
+            except: pass
         celebrated_name2 = st.selectbox('Nombre del festejado 2',options=options)
         if celebrated_name2!='All':    
             idd = (idd) & (clients['celebrated_name2']==celebrated_name2)
@@ -92,7 +93,6 @@ if clients.empty is False:
         fechafinal = st.date_input('Fecha final',clients[idd]['event_day'].max())
        
     clients.index = range(len(clients))
-    clients['event_day'] = pd.to_datetime(clients['event_day'],errors='coerce')
     idd     = (clients['event_day']>=str(fechainicial)) & (clients['event_day']<=str(fechafinal))
     clients = clients[idd]
 

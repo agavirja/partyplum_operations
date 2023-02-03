@@ -99,19 +99,22 @@ if id_event=='':
     with st.sidebar:
         clientfilter  = st.selectbox('Nombre del cliente',options=sorted(data_clientes['client'].unique()))
         idd           = (idd) & (data_clientes['client']==clientfilter)
+        
         packagefilter = st.selectbox('Paquete contratado',options=sorted(data_clientes[idd]['contracted_package'].unique()))
-        idd        = (idd) & (data_clientes['contracted_package']==packagefilter)
+        idd           = (idd) & (data_clientes['contracted_package']==packagefilter)
 
         temafilter = st.selectbox('Tema del evento',options=sorted(data_clientes[idd]['theme'].unique()))
         idd        = (idd) & (data_clientes['theme']==temafilter)
 
-        #celebratedfilter = st.selectbox('Nombre del celebrado',options=sorted(data_clientes[idd]['celebrated_name'].unique()))
-        #idd              = (idd) & (data_clientes['contracted_package']==celebratedfilter)
+        celebratedfilter = st.selectbox('Nombre del celebrado',options=sorted(data_clientes[idd]['celebrated_name'].unique()))
+        idd              = (idd) & (data_clientes['celebrated_name']==celebratedfilter)
         
-        st.dataframe(data_clientes[idd])
-        st.write(data_clientes[idd]['id_event'].iloc[0])
-        id_event = data_clientes[idd]['id_event'].iloc[0]
+        fechacelebracion = st.date_input('Filtro por fecha')
+        idd              = (idd) & (data_clientes['event_day']>=fechacelebracion)
 
+        if sum(idd)>0:
+            id_event = data_clientes[idd]['id_event'].iloc[0]
+        else: st.error('No se encontro el evento')
 
 data         = pd.DataFrame()
 checkvalues  = False
