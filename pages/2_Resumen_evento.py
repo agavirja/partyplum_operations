@@ -167,10 +167,14 @@ if data.empty is False:
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        cliente            = st.text_input('Cliente',value=clientdata["client"]) 
-        paquete_contratado = st.text_input('Paquete',value=clientdata['contracted_package'])         
-        valorpaquete       = st.text_input('Valor',value=f'${clientdata["package_value"]:,.0f}')
-        valorpaquete       = Price.fromstring(valorpaquete).amount_float    
+        cliente            = st.text_input('Cliente',value=clientdata["client"])
+        paquete_contratado = st.text_input('Paquete',value=clientdata['contracted_package'])
+        if "package_value" not in clientdata and clientdata["package_value"] is not None and clientdata["package_value"]!='':
+            package_value = clientdata["package_value"]
+        else:
+            package_value = package[package['package']==paquete_contratado.upper()]['price'].iloc[0]
+        valorpaquete       = st.text_input('Valor',value=f'${package_value:,.0f}')
+        valorpaquete       = Price.fromstring(valorpaquete).amount_float
         tematica           = st.text_input('Temática',value=clientdata["theme"])    
         ocacioncelebracion = st.text_input('Ocasión de Celebración',value=clientdata["occasion_celebration"])
         nombrefestejado    = st.text_input('Nombre del festejado',value=clientdata["celebrated_name"]) 
