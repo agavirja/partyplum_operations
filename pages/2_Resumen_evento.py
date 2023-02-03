@@ -57,6 +57,7 @@ def data_labour():
 def data_event_client():
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
     data          = pd.read_sql("SELECT id as id_event,client,contracted_package,event_day,theme,celebrated_name,celebrated_name2 FROM partyplum.events" , con=db_connection)
+    data['event_day'] = pd.to_datetime(data['event_day'],errors='coerce')
     return data
 
 @st.experimental_memo
