@@ -110,7 +110,7 @@ if id_event=='':
         celebratedfilter = st.selectbox('Nombre del celebrado',options=sorted(data_clientes[idd]['celebrated_name'].unique()))
         idd              = (idd) & (data_clientes['celebrated_name']==celebratedfilter)
         
-        fechacelebracion = st.date_input('Filtro por fecha')
+        fechacelebracion = st.date_input('Filtro por fecha',data_clientes[idd]['event_day'].min())
         idd              = (idd) & (data_clientes['event_day']>=fechacelebracion)
 
         if sum(idd)>0:
