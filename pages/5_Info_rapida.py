@@ -80,8 +80,11 @@ if data.empty is False:
     st.write('---')
     datashow = data[['city','address','event_day','start_event','setup_time','date_pick_up','hour_pick_up','principal_img']]
     formato = {'city':'Ciudad','address':'Dirección','event_day':'Fecha del evento','start_event':'Hora de evento','setup_time':'Hora de montaje','date_pick_up':'Fecha de recogida','hour_pick_up':'Hora de recogida'} 
+    datashow['event_day']    = datashow['event_day'].apply(lambda x: x.strftime("%d-%m-%Y"))
+    datashow['date_pick_up'] = datashow['date_pick_up'].apply(lambda x: x.strftime("%d-%m-%Y"))
     conteo  = 0
     for key,value in formato.items():
+
         if conteo % 2 == 0:
             col1, col2 = st.columns(2)
             with col1:
