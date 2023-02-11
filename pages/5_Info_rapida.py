@@ -43,7 +43,7 @@ def data_labour():
 @st.experimental_memo
 def data_event_client():
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
-    data          = pd.read_sql("SELECT id as id_event,client,contracted_package,event_day,theme,celebrated_name,celebrated_name2 FROM partyplum.events" , con=db_connection)
+    data          = pd.read_sql("SELECT id as id_event,client,contracted_package,event_day,theme,celebrated_name,celebrated_name2 FROM partyplum.events WHERE available=1" , con=db_connection)
     return data
 
 
@@ -90,5 +90,5 @@ if data.empty is False:
             with col2:
                 st.text_input(f'{value}',value=datashow[key].iloc[0])           
         conteo += 1
-        
-    st.image(datashow['img_event'].iloc[0],width=300)
+    try: st.image(datashow['principal_img'].iloc[0],width=300)
+    except: pass
