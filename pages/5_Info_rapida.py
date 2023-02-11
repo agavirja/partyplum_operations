@@ -90,5 +90,5 @@ if data.empty is False:
             with col2:
                 st.text_input(f'{value}',value=datashow[key].iloc[0])           
         conteo += 1
-    try: st.image(datashow['principal_img'].iloc[0],width=300)
-    except: pass
+    st.write(datashow['principal_img'].iloc[0])
+    st.image(datashow['principal_img'].iloc[0],width=300)
