@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import mysql.connector as sql
 from bs4 import BeautifulSoup
-
+from datetime import datetime
 # streamlit run D:\Dropbox\Empresa\PartyPlum\app_operaciones\Home.py
 # https://streamlit.io/
 # pipreqs --encoding utf-8 "D:\Dropbox\Empresa\PartyPlum\app_operaciones\online_app"
@@ -142,7 +142,9 @@ if clients.empty is False:
         </style>
     """
     imagenes = ''
-    clients  = clients.sort_values(by='date_insert',ascending=False)
+    now = datetime.now()
+    clients['diff'] = abs(clients['event_day'] - now)
+    clients         = clients.sort_values(by='diff',ascending=True)
     for i, inputval in clients.iterrows():
         imagen_principal =  "https://personal-data-bucket-online.s3.us-east-2.amazonaws.com/sin_imagen.png"
         if isinstance(inputval['principal_img'], str) and len(inputval['principal_img'])>20: imagen_principal =  inputval['principal_img']
