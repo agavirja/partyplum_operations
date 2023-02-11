@@ -419,7 +419,7 @@ if checkvalues and data.empty is False:
     #-------------------------------------------------------------------------#
     # Orden de compra
     st.write('---')
-    st.markdown('<p style="color: #BA5778;"><strong> Orden de compra:</strong><p>', unsafe_allow_html=True)
+    st.markdown('<p style="color: #BA5778;"><strong>Orden de compra:</strong><p>', unsafe_allow_html=True)
     
     products       = data_products(category='BASIC',id_package=id_package)
     providers      = data_providers(category='BASIC')
@@ -507,12 +507,13 @@ if checkvalues and data.empty is False:
     #-------------------------------------------------------------------------#
     # Impresiones
     st.write('---')
-    st.markdown('<p style="color: #BA5778;"><strong> Orden de compra:</strong><p>', unsafe_allow_html=True)
+    st.markdown('<p style="color: #BA5778;"><strong>Impresiones:</strong><p>', unsafe_allow_html=True)
     
     products       = data_products(category='PRINT',id_package=id_package)
     providers      = data_providers(category='PRINT')
     print_paso     = copy.deepcopy(purchase_origen)
     
+        # Seleccion solo impresiones
     products['keep'] = 1
     print_paso    = pd.DataFrame(print_paso).merge(products[['id','keep']],on='id',how='left',validate='1:1')
     print_paso    = print_paso[print_paso['keep']==1]
@@ -1634,6 +1635,56 @@ if data.empty is False:
       
     col1, col2 = st.columns(2)
     with col1:
+        if st.button('Guardar Datos'):
+            with st.spinner("Guardando Datos"):
+                
+                pagos.append({'name':'saldo_pendiente','value':saldo_pendiente,'date':None})
+                pagos.append({'name':'valorpaquete','value':valorpaquete,'date':None})
+                dataexport.index                     = range(len(dataexport))
+                dataexport['date_insert']            = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                dataexport.loc[0,'purchase_order']   = pd.io.json.dumps(purchase_order)
+                dataexport.loc[0,'labour_order']     = pd.io.json.dumps(labour_order)
+                dataexport.loc[0,'transport_order']  = pd.io.json.dumps(transport_order)
+                dataexport.loc[0,'peajes_order']     = pd.io.json.dumps(peajes_order)
+                dataexport.loc[0,'bakery_order']     = pd.io.json.dumps(bakery_order)
+                dataexport.loc[0,'additional_order'] = pd.io.json.dumps(additional_order)
+                dataexport.loc[0,'other_expenses']   = pd.io.json.dumps(other_expenses)
+                dataexport.loc[0,'pagos']            = pd.io.json.dumps(pagos)
+                dataexport.loc[0,'clientdata']       = pd.io.json.dumps(clientdata)
+                dataexport.loc[0,'img_event']        = img_event
+
+                # Guardar una copia en datos historicos
+                data2historic              = copy.deepcopy(dataexport)
+                data2historic['id_events'] = id_event
+
+                engine   = create_engine(f'mysql+mysqlconnector://{user}:{password}@{host}/{schema}')
+                data2historic.to_sql('events_historic',engine,if_exists='append', index=False)
+                
+                # Reemplazar datos en la base de datos de eventos
+                variables = ''
+                varlist   = []
+                for i in dataexport:
+                    if dataexport[i].iloc[0] is not None and dataexport[i].iloc[0]!='':
+                        variables += f',{i}=%s'
+                        varlist.append(i)
+                        
+                variables        = variables.strip(',').strip()
+                data2event       = dataexport[varlist]
+                data2event['id'] = id_event
+                valores          = list(data2event.apply(lambda x: tuple(x), axis=1).unique())
+                db_connection = sql.connect(user=user, password=password, host=host, database=schema)
+                cursor        = db_connection.cursor()
+                cursor.executemany(f"""UPDATE {schema}.events SET {variables} WHERE id=%s """,valores)
+                db_connection.commit()
+                db_connection.close()
+                
+                st.success('Datos guardados con exito')
+                
+                time.sleep(3)
+                st.experimental_memo.clear()
+                st.experimental_rerun()
+                
+    with col2:
         if st.button('Generar pdf'):
             css_format = """
               <style>
@@ -1697,52 +1748,45 @@ if data.empty is False:
                                     data=PDFbyte,
                                     file_name="resumen_party_plum.pdf",
                                     mime='application/octet-stream')
-    with col2:
-        if st.button('Guardar Datos'):
-            with st.spinner("Guardando Datos"):
                 
-                pagos.append({'name':'saldo_pendiente','value':saldo_pendiente,'date':None})
-                pagos.append({'name':'valorpaquete','value':valorpaquete,'date':None})
-                dataexport.index                     = range(len(dataexport))
-                dataexport['date_insert']            = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                dataexport.loc[0,'purchase_order']   = pd.io.json.dumps(purchase_order)
-                dataexport.loc[0,'labour_order']     = pd.io.json.dumps(labour_order)
-                dataexport.loc[0,'transport_order']  = pd.io.json.dumps(transport_order)
-                dataexport.loc[0,'peajes_order']     = pd.io.json.dumps(peajes_order)
-                dataexport.loc[0,'bakery_order']     = pd.io.json.dumps(bakery_order)
-                dataexport.loc[0,'additional_order'] = pd.io.json.dumps(additional_order)
-                dataexport.loc[0,'other_expenses']   = pd.io.json.dumps(other_expenses)
-                dataexport.loc[0,'pagos']            = pd.io.json.dumps(pagos)
-                dataexport.loc[0,'clientdata']       = pd.io.json.dumps(clientdata)
-                dataexport.loc[0,'img_event']        = img_event
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button('Eliminar Evento'):
+            checkdelete = st.checkbox("Seguro de eliminar evento?", value=False)
+            if checkdelete:
+                with st.spinner("Eliminado evento"):
+                    pagos.append({'name':'saldo_pendiente','value':saldo_pendiente,'date':None})
+                    pagos.append({'name':'valorpaquete','value':valorpaquete,'date':None})
+                    data2delete                          = copy.deepcopy(dataexport)
+                    data2delete.index                     = range(len(data2delete))
+                    data2delete['date_insert']            = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    data2delete.loc[0,'purchase_order']   = pd.io.json.dumps(purchase_order)
+                    data2delete.loc[0,'labour_order']     = pd.io.json.dumps(labour_order)
+                    data2delete.loc[0,'transport_order']  = pd.io.json.dumps(transport_order)
+                    data2delete.loc[0,'peajes_order']     = pd.io.json.dumps(peajes_order)
+                    data2delete.loc[0,'bakery_order']     = pd.io.json.dumps(bakery_order)
+                    data2delete.loc[0,'additional_order'] = pd.io.json.dumps(additional_order)
+                    data2delete.loc[0,'other_expenses']   = pd.io.json.dumps(other_expenses)
+                    data2delete.loc[0,'pagos']            = pd.io.json.dumps(pagos)
+                    data2delete.loc[0,'clientdata']       = pd.io.json.dumps(clientdata)
+                    data2delete.loc[0,'img_event']        = img_event
+    
+                    # Guardar una copia en datos historicos
+                    data2historic              = copy.deepcopy(data2delete)
+                    data2historic['id_events'] = id_event
 
-                # Guardar una copia en datos historicos
-                data2historic              = copy.deepcopy(dataexport)
-                data2historic['id_events'] = id_event
-
-                engine   = create_engine(f'mysql+mysqlconnector://{user}:{password}@{host}/{schema}')
-                data2historic.to_sql('events_historic',engine,if_exists='append', index=False)
-                
-                # Reemplazar datos en la base de datos de eventos
-                variables = ''
-                varlist   = []
-                for i in dataexport:
-                    if dataexport[i].iloc[0] is not None and dataexport[i].iloc[0]!='':
-                        variables += f',{i}=%s'
-                        varlist.append(i)
-                        
-                variables        = variables.strip(',').strip()
-                data2event       = dataexport[varlist]
-                data2event['id'] = id_event
-                valores          = list(data2event.apply(lambda x: tuple(x), axis=1).unique())
-                db_connection = sql.connect(user=user, password=password, host=host, database=schema)
-                cursor        = db_connection.cursor()
-                cursor.executemany(f"""UPDATE {schema}.events SET {variables} WHERE id=%s """,valores)
-                db_connection.commit()
-                db_connection.close()
-                
-                st.success('Datos guardados con exito')
-                
-                time.sleep(3)
-                st.experimental_memo.clear()
-                st.experimental_rerun()
+                    engine   = create_engine(f'mysql+mysqlconnector://{user}:{password}@{host}/{schema}')
+                    data2historic.to_sql('events_historic',engine,if_exists='append', index=False)
+                    
+                    # Reemplazar datos en la base de datos de eventos
+                    db_connection = sql.connect(user=user, password=password, host=host, database=schema)
+                    cursor        = db_connection.cursor()
+                    cursor.executemany(f"""UPDATE {schema}.events SET available=0 WHERE id={id_event} """)
+                    db_connection.commit()
+                    db_connection.close()
+                    
+                    st.success('Evento eliminado con exito')
+                    
+                    time.sleep(3)
+                    st.experimental_memo.clear()
+                    st.experimental_rerun()    

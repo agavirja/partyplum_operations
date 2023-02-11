@@ -18,7 +18,7 @@ schema   = st.secrets["schema"]
 @st.experimental_memo
 def data_clients():
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
-    data          = pd.read_sql("SELECT id,city,event_day,theme,contracted_package,client,celebrated_name,celebrated_name2,principal_img FROM partyplum.events" , con=db_connection)
+    data          = pd.read_sql("SELECT id,city,event_day,theme,contracted_package,client,celebrated_name,celebrated_name2,principal_img FROM partyplum.events WHERE available=1" , con=db_connection)
     data['event_day'] = pd.to_datetime(data['event_day'],errors='coerce')
     return data
 
