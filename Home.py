@@ -18,8 +18,9 @@ schema   = st.secrets["schema"]
 @st.experimental_memo
 def data_clients():
     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
-    data          = pd.read_sql("SELECT id,city,event_day,theme,contracted_package,client,celebrated_name,celebrated_name2,principal_img FROM partyplum.events WHERE available=1" , con=db_connection)
-    data['event_day'] = pd.to_datetime(data['event_day'],errors='coerce')
+    data          = pd.read_sql("SELECT id,city,date_insert,event_day,theme,contracted_package,client,celebrated_name,celebrated_name2,principal_img FROM partyplum.events WHERE available=1" , con=db_connection)
+    data['event_day']   = pd.to_datetime(data['event_day'],errors='coerce')
+    data['date_insert'] = pd.to_datetime(data['date_insert'],errors='coerce')
     return data
 
 #-----------------------------------------------------------------------------#
@@ -141,6 +142,7 @@ if clients.empty is False:
         </style>
     """
     imagenes = ''
+    clients  = clients.sort_values(by='date_insert',ascending=False)
     for i, inputval in clients.iterrows():
         imagen_principal =  "https://personal-data-bucket-online.s3.us-east-2.amazonaws.com/sin_imagen.png"
         if isinstance(inputval['principal_img'], str) and len(inputval['principal_img'])>20: imagen_principal =  inputval['principal_img']
