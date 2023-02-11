@@ -505,6 +505,68 @@ if checkvalues and data.empty is False:
     st.markdown(f'<p style="color: #BA5778; font-size:12px;"><strong> Subtotal orden de pedido ${orden_suma:,.0f}</strong><p>', unsafe_allow_html=True)
     
     #-------------------------------------------------------------------------#
+    # Proovedores orden de compra
+    for i in purchase_order:
+        if 'providers' in i:
+            if  len(i['providers'])>1:
+                st.write('---')
+                st.markdown('<p style="color: #BA5778;"><strong> Valor por proveedores de orden de compra:</strong><p>', unsafe_allow_html=True)
+                break
+    
+    for i in purchase_order:
+        for j in purchase_paso:
+            if ('id' in i and 'id' in j) and (i['id'] is not None and j['id'] is not None) and int(i['id'])==int(j['id']):
+                if 'provider_by_value' not in i: i['provider_by_value'] = []
+                    i['provider_by_value'] = copy.deepcopy(j['provider_by_value'])
+                    break
+                
+    for i in purchase_order:
+        if 'providers' in i:
+            if len(i['providers'])>1:
+                if 'total' in i and i['total']>0:
+                    item   = ' '.join(i['name'].split('_')).title()
+                    conteo = 1
+                    proveedor_update     = []
+                    suma_valor_proveedor = 0
+                    col1, col2, col3 = st.columns(3)
+                    with col1: 
+                        st.write(item)
+                    for nombre in i['providers']:
+                        with col2:
+                            nombre_proveedor = st.text_input(f'{item} proveedor {conteo}',value=f'{nombre}')
+                        with col3:
+                            value = 0
+                            if 'provider_by_value' in i and i['provider_by_value'] is not None and i['provider_by_value']!=[]:
+                                for pbv in i['provider_by_value']:
+                                    if pbv['providers_name'].lower().strip()==nombre.lower().strip():
+                                        if 'providers_value' in pbv:
+                                            value = pbv['providers_value']
+                                            break
+    
+                            valor_proveedor  = st.text_input(f'{item} proveedor {conteo} Valor',value=f'${value:,.0f}')
+                            valor_proveedor  = Price.fromstring(valor_proveedor).amount_float
+                            suma_valor_proveedor += valor_proveedor
+                        proveedor_update.append({'providers_name':nombre_proveedor,'providers_value':valor_proveedor})
+                        conteo += 1
+                    i.update({'provider_by_value':proveedor_update})
+                    
+            if len(i['providers'])==1:
+                col1, col2, col3 = st.columns(3)
+                with col1: 
+                    item   = ' '.join(i['name'].split('_')).title()
+                    st.write(item)
+                with col2:
+                    nombre_proveedor = st.text_input(f'{item} proveedor',value=f"{i['providers'][0]}")
+                with col3:
+                    valor_proveedor  = st.text_input(f'{item} proveedor Valor',value=f"${i['total']:,.0f}")
+                    valor_proveedor  = Price.fromstring(valor_proveedor).amount_float
+                            
+                if 'total' in i and i['total']>0:
+                    item             = ' '.join(i['name'].split('_')).title()
+                    proveedor_update = [{'providers_name':i['providers'][0],'providers_value':valor_proveedor}]
+                    i.update({'provider_by_value':proveedor_update})
+                    
+    #-------------------------------------------------------------------------#
     # Impresiones
     st.write('---')
     st.markdown('<p style="color: #BA5778;"><strong>Impresiones:</strong><p>', unsafe_allow_html=True)
@@ -592,10 +654,73 @@ if checkvalues and data.empty is False:
         if 'total' in i: 
             print_suma += i['total']
     st.markdown(f'<p style="color: #BA5778; font-size:12px;"><strong> Subtotal impresiones ${print_suma:,.0f}</strong><p>', unsafe_allow_html=True)
-    
     orden_suma += print_suma
-    purchase_order += print_order
     
+    #-------------------------------------------------------------------------#
+    # Proovedores de impresiones
+    for i in print_order:
+        if 'providers' in i:
+            if  len(i['providers'])>1:
+                st.write('---')
+                st.markdown('<p style="color: #BA5778;"><strong> Valor por proveedores de impresiones:</strong><p>', unsafe_allow_html=True)
+                break
+    
+    for i in print_order:
+        for j in purchase_paso:
+            if ('id' in i and 'id' in j) and (i['id'] is not None and j['id'] is not None) and int(i['id'])==int(j['id']):
+                if 'provider_by_value' not in i: i['provider_by_value'] = []
+                if 'provider_by_value' in j:
+                    i['provider_by_value'] = copy.deepcopy(j['provider_by_value'])
+                    break
+                
+    for i in print_order:
+        if 'providers' in i:
+            if len(i['providers'])>1:
+                if 'total' in i and i['total']>0:
+                    item   = ' '.join(i['name'].split('_')).title()
+                    conteo = 1
+                    proveedor_update     = []
+                    suma_valor_proveedor = 0
+                    col1, col2, col3 = st.columns(3)
+                    with col1: 
+                        st.write(item)
+                    for nombre in i['providers']:
+                        with col2:
+                            nombre_proveedor = st.text_input(f'{item} proveedor {conteo}',value=f'{nombre}')
+                        with col3:
+                            value = 0
+                            if 'provider_by_value' in i and i['provider_by_value'] is not None and i['provider_by_value']!=[]:
+                                for pbv in i['provider_by_value']:
+                                    if pbv['providers_name'].lower().strip()==nombre.lower().strip():
+                                        if 'providers_value' in pbv:
+                                            value = pbv['providers_value']
+                                            break
+    
+                            valor_proveedor  = st.text_input(f'{item} proveedor {conteo} Valor',value=f'${value:,.0f}')
+                            valor_proveedor  = Price.fromstring(valor_proveedor).amount_float
+                            suma_valor_proveedor += valor_proveedor
+                        proveedor_update.append({'providers_name':nombre_proveedor,'providers_value':valor_proveedor})
+                        conteo += 1
+                    i.update({'provider_by_value':proveedor_update})
+                    
+            if len(i['providers'])==1:
+                col1, col2, col3 = st.columns(3)
+                with col1: 
+                    item   = ' '.join(i['name'].split('_')).title()
+                    st.write(item)
+                with col2:
+                    nombre_proveedor = st.text_input(f'{item} proveedor',value=f"{i['providers'][0]}")
+                with col3:
+                    valor_proveedor  = st.text_input(f'{item} proveedor Valor',value=f"${i['total']:,.0f}")
+                    valor_proveedor  = Price.fromstring(valor_proveedor).amount_float
+                            
+                if 'total' in i and i['total']>0:
+                    item             = ' '.join(i['name'].split('_')).title()
+                    proveedor_update = [{'providers_name':i['providers'][0],'providers_value':valor_proveedor}]
+                    i.update({'provider_by_value':proveedor_update})
+                    
+    purchase_order += print_order
+
     #-------------------------------------------------------------------------#
     # Personal
     st.write('---')
