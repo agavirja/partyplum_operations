@@ -78,7 +78,7 @@ if sum(idd)>0:
 
 if data.empty is False:
     st.write('---')
-    datashow = data[['city','address','event_day','start_event','setup_time','date_pick_up','hour_pick_up','img_event']]
+    datashow = data[['city','address','event_day','start_event','setup_time','date_pick_up','hour_pick_up','principal_img']]
     formato = {'city':'Ciudad','address':'Dirección','event_day':'Fecha del evento','start_event':'Hora de evento','setup_time':'Hora de montaje','date_pick_up':'Fecha de recogida','hour_pick_up':'Hora de recogida'} 
     conteo  = 0
     for key,value in formato.items():
