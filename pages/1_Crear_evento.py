@@ -352,7 +352,7 @@ if check_item:
     for i in printinfo_order:
         if 'total' in i: 
             printinfo_suma += i['total']
-    st.markdown(f'<p style="color: #BA5778; font-size:12px;"><strong> Subtotal repostería ${printinfo_suma:,.0f}</strong><p>', unsafe_allow_html=True)
+    st.markdown(f'<p style="color: #BA5778; font-size:12px;"><strong> Subtotal impresiones ${printinfo_suma:,.0f}</strong><p>', unsafe_allow_html=True)
 
     orden_suma = orden_suma + printinfo_suma
 #-----------------------------------------------------------------------------#
@@ -742,7 +742,7 @@ css_format = """
 """
 
 # Orden de compra
-if purchase_order!=[]:
+if orden_suma>0:
     st.markdown('<p><strong>Orden de compra</strong><p>', unsafe_allow_html=True)
     count = 0
     tabla = '''
@@ -801,7 +801,7 @@ if purchase_order!=[]:
     st.markdown(html_struct, unsafe_allow_html=True)
 
 # Personal
-if labour_order!=[]:
+if personal_suma>0:
     st.write('---')
     st.markdown('<p><strong>Personal</strong><p>', unsafe_allow_html=True)
     count = 0
@@ -857,7 +857,7 @@ if labour_order!=[]:
     st.markdown(html_struct, unsafe_allow_html=True)
 
 # Transporte
-if transport_order!=[]:
+if transporte_suma>0:
     st.write('---')
     st.markdown('<p><strong>Transporte</strong><p>', unsafe_allow_html=True)
     count = 0
@@ -953,7 +953,7 @@ st.markdown(html_struct, unsafe_allow_html=True)
 
 
 # Reposteria
-if bakery_order!=[]:
+if bakery_suma>0:
     st.write('---')
     st.markdown('<p><strong>Repostería</strong><p>', unsafe_allow_html=True)
     count = 0
@@ -1013,7 +1013,7 @@ if bakery_order!=[]:
     st.markdown(html_struct, unsafe_allow_html=True)
 
 # Adicionales
-if additional_order!=[]:
+if additional_suma>0:
     st.write('---')
     st.markdown('<p><strong>Adicionales</strong><p>', unsafe_allow_html=True)
     count = 0
@@ -1076,43 +1076,46 @@ st.markdown('<p style="color: #BA5778;"><strong> Resumen para el cliente</strong
 
 # Reposteria
 tabla_reposteria = ''
-for i in bakery_order:
-    tabla_reposteria += f'''
-      <tr style="background-color: #ffffff;">
-        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['name']+' '+i['description']}</td>
-        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['amount']}</td>
-        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${i['total']:,.0f}</td>
-      </tr>
-    '''
-if tabla_reposteria!='': 
-    tabla_reposteria += f'''
-      <tr style="background-color: #FFFFFF;">
-        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;"><strong>Total</strong></td>
-        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;"></td>
-        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;"><strong>${bakery_suma:,.0f}</strong></td>
-      </tr>
-    '''
+if bakery_suma>0:
+    for i in bakery_order:
+        tabla_reposteria += f'''
+          <tr style="background-color: #ffffff;">
+            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['name']+' '+i['description']}</td>
+            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['amount']}</td>
+            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${i['total']:,.0f}</td>
+          </tr>
+        '''
+    if tabla_reposteria!='': 
+        tabla_reposteria += f'''
+          <tr style="background-color: #FFFFFF;">
+            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;"><strong>Total</strong></td>
+            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;"></td>
+            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;"><strong>${bakery_suma:,.0f}</strong></td>
+          </tr>
+        '''
 
 # Adicionales
-tabla_adicionales = f'''
-  <tr style="background-color: #ffffff;">
-    <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">Decoración {paquete_contratado}</td>
-    <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${valorpaquete:,.0f}</td>
-  </tr>
-'''
-for i in additional_order:
-    tabla_adicionales += f'''
+tabla_adicionales = ''
+if additional_suma>0:
+    tabla_adicionales = f'''
       <tr style="background-color: #ffffff;">
-        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['name']}</td>
-        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${i['total']:,.0f}</td>
+        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">Decoración {paquete_contratado}</td>
+        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${valorpaquete:,.0f}</td>
       </tr>
     '''
-tabla_adicionales += f'''
-  <tr style="background-color: #FFFFFF;">
-    <td style="font-family:{fontfamily};font-size:{fontsize}px; background-color: #FF94F4; border: 1px solid black;"><strong>Total</strong></td>
-    <td style="font-family:{fontfamily};font-size:{fontsize}px; background-color: #FF94F4; border: 1px solid black;"><strong>${valorpaquete+additional_suma:,.0f}</strong></td>
-  </tr>
-'''
+    for i in additional_order:
+        tabla_adicionales += f'''
+          <tr style="background-color: #ffffff;">
+            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['name']}</td>
+            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${i['total']:,.0f}</td>
+          </tr>
+        '''
+    tabla_adicionales += f'''
+      <tr style="background-color: #FFFFFF;">
+        <td style="font-family:{fontfamily};font-size:{fontsize}px; background-color: #FF94F4; border: 1px solid black;"><strong>Total</strong></td>
+        <td style="font-family:{fontfamily};font-size:{fontsize}px; background-color: #FF94F4; border: 1px solid black;"><strong>${valorpaquete+additional_suma:,.0f}</strong></td>
+      </tr>
+    '''
   
 # Estado de cuenta
 total_pagos = 0

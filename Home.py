@@ -132,8 +132,9 @@ if clients.empty is False:
           }
     
           img{
-            width:100%;
-            height:200px;
+            max-width: 100%;
+            width: 100%;
+            object-fit: cover;
             margin-bottom: 10px; 
           }
         </style>

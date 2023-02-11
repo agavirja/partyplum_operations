@@ -409,10 +409,10 @@ if data.empty is False:
                     })  
                     
     #-------------------------------------------------------------------------#
-    # Modificar valores
+    # Información detallada
     st.write('---')
-    st.markdown('<p style="color: #BA5778;"><strong>Modificar valores</strong><p>', unsafe_allow_html=True)
-    checkvalues = st.checkbox('Modificar valores', value=False)
+    st.markdown('<p style="color: #BA5778;"><strong>Información detallada</strong><p>', unsafe_allow_html=True)
+    checkvalues = st.checkbox('Información detallada', value=False)
     
 if checkvalues and data.empty is False:
 
@@ -422,13 +422,8 @@ if checkvalues and data.empty is False:
     st.markdown('<p style="color: #BA5778;"><strong> Orden de compra:</strong><p>', unsafe_allow_html=True)
     
     products       = data_products(category='BASIC',id_package=id_package)
-    printdata      = data_products(category='PRINT',id_package=id_package)
-    products       = products.append(printdata)
-    
     providers      = data_providers(category='BASIC')
-    printproviders = data_providers(category='PRINT')
-    providers      = providers.append(printproviders)
-    
+
     purchase_paso  = copy.deepcopy(purchase_origen)
     purchase_order = []
     
@@ -501,6 +496,89 @@ if checkvalues and data.empty is False:
         if 'total' in i: 
             orden_suma += i['total']
     st.markdown(f'<p style="color: #BA5778; font-size:12px;"><strong> Subtotal orden de pedido ${orden_suma:,.0f}</strong><p>', unsafe_allow_html=True)
+    
+    #-------------------------------------------------------------------------#
+    # Impresiones
+    st.write('---')
+    st.markdown('<p style="color: #BA5778;"><strong> Orden de compra:</strong><p>', unsafe_allow_html=True)
+    
+    products       = data_products(category='PRINT',id_package=id_package)
+    providers      = data_providers(category='PRINT')
+    print_paso     = copy.deepcopy(purchase_origen)
+    print_order = []
+    
+    idlist         = []
+    for i in print_paso:
+        i['checkitem'] = True
+        idlist.append(i['id'])
+        
+    for i,items in products.iterrows():
+        if items['id'] not in idlist:
+            print_paso.append({
+                'name':items['item'],
+                'id':items['id'],
+                'amount':items['amount_default'],
+                'unit_value':items['unit_value_default'],
+                'total':items['amount_default']*items['unit_value_default'],
+                'providers':[],
+                'description':'',
+                'checkitem':False
+                })
+    
+    for items in print_paso:
+        idcodigo   = items['id']
+        name       = items['name']
+        amount     = items['amount']
+        unit_value = items['unit_value']
+        try: unit_value = float(unit_value)
+        except: pass
+        proveedor_vector  = copy.deepcopy(items['providers'])
+        proveedor_default = copy.deepcopy(items['providers'])
+        description       = ''
+        if 'description' in items:
+            description = items['description']
+        checkitem = False
+        if 'checkitem' in items: checkitem = items['checkitem'] 
+        
+        col1, col2, col3, col4, col5, col6 = st.columns([1,2,2,2,2,3])
+        with col1: 
+            check_products = st.checkbox(f'{name}', value=checkitem)
+        if check_products:
+            with col2:
+                cantidad = st.number_input(f'Cantidad {name}',min_value=0,value=amount)
+            with col3:
+                valorU   = st.text_input(f'Valor unitario {name}',value=f'${unit_value:,.0f}')
+                valorU   = Price.fromstring(valorU).amount_float
+            with col4:
+                total          = cantidad*valorU
+                valorTotal_str = st.text_input(f'Valor Total {name}',value=f'${total:,.0f}')
+            with col5:
+                idd = providers['id']==idcodigo
+                if sum(idd)>0:
+                    proveedor_vector += sorted(providers[idd]['name'].to_list())
+                if proveedor_vector!=[]:
+                    proveedor_vector = list(set(proveedor_vector))
+                proveedor  = st.multiselect(f'Proveedor {name}',options=proveedor_vector,default=proveedor_default)
+            if name.lower().strip()=='globos' or 'flores' in name.lower().strip():
+                with col6:
+                    description   = st.text_area(f'Pedido {name}',value=description)
+                            
+            print_order.append({'name':name,
+                                   'id':idcodigo,
+                                   'amount':cantidad,
+                                   'unit_value':valorU,
+                                   'total':total,
+                                   'providers':proveedor,
+                                   'description':description})
+    
+    print_suma = 0
+    for i in print_order:
+        if 'total' in i: 
+            print_suma += i['total']
+    st.markdown(f'<p style="color: #BA5778; font-size:12px;"><strong> Subtotal impresiones ${print_suma:,.0f}</strong><p>', unsafe_allow_html=True)
+    
+    orden_suma += print_suma
+    purchase_order += print_order
     
     #-------------------------------------------------------------------------#
     # Personal
@@ -840,7 +918,7 @@ if checkvalues and data.empty is False:
             if 'description' in items:
                 description = items['description']
             checkitem = False
-            if 'checkitem' in items:    checkitem = items['checkitem'] 
+            if 'checkitem' in items: checkitem = items['checkitem'] 
             if name.lower().strip()=='transporte fuera de la ciudad' and recargototaldistancia>0: checkitem = True
             
             col1, col2, col3 = st.columns(3)
@@ -849,8 +927,8 @@ if checkvalues and data.empty is False:
             if  check_item:
                 with col2:
                     value = items['total']
-                    if name.lower().strip()=='transporte fuera de la ciudad' and recargototaldistancia>0:
-                        value = copy.deepcopy(recargototaldistancia)
+                    #if name.lower().strip()=='transporte fuera de la ciudad' and recargototaldistancia>0:
+                    #    value = copy.deepcopy(recargototaldistancia)
                     total = st.text_input(f'Valor {name}',value=f'${value:,.0f}')
                     total = Price.fromstring(total).amount_float
                 with col3:
@@ -993,7 +1071,7 @@ if data.empty is False:
     """
     
     # Orden de compra
-    if purchase_order!=[]:
+    if orden_suma>0:
         st.markdown('<p><strong>Orden de compra</strong><p>', unsafe_allow_html=True)
         count = 0
         tabla = '''
@@ -1052,7 +1130,7 @@ if data.empty is False:
         st.markdown(html_struct, unsafe_allow_html=True)
     
     # Personal
-    if labour_order!=[]:
+    if personal_suma>0:
         st.write('---')
         st.markdown('<p><strong>Personal</strong><p>', unsafe_allow_html=True)
         count = 0
@@ -1108,7 +1186,7 @@ if data.empty is False:
         st.markdown(html_struct, unsafe_allow_html=True)
     
     # Transporte
-    if transport_order!=[]:
+    if transporte_suma>0:
         st.write('---')
         st.markdown('<p><strong>Transporte</strong><p>', unsafe_allow_html=True)
         count = 0
@@ -1256,7 +1334,7 @@ if data.empty is False:
     
     
     # Reposteria
-    if bakery_order!=[]:
+    if bakery_suma>0:
         st.write('---')
         st.markdown('<p><strong> Repostería</strong><p>', unsafe_allow_html=True)
         count = 0
@@ -1316,7 +1394,7 @@ if data.empty is False:
         st.markdown(html_struct, unsafe_allow_html=True)
     
     # Adicionales
-    if additional_order!=[]:
+    if additional_suma>0:
         st.write('---')
         st.markdown('<p><strong> Adicionales</strong><p>', unsafe_allow_html=True)
         count = 0
@@ -1379,53 +1457,56 @@ if data.empty is False:
     
     # Reposteria
     tabla_reposteria = ''
-    for i in bakery_order:
-        tabla_reposteria += f'''
-          <tr style="background-color: #ffffff;">
-            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['name']+' '+i['description']}</td>
-            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['amount']}</td>
-            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${i['total']:,.0f}</td>
-          </tr>
-        '''
-    if tabla_reposteria!='': 
-        tabla_reposteria += f'''
-          <tr style="background-color: #FFFFFF;">
-            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;"><strong>Total</strong></td>
-            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;"></td>
-            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;"><strong>${bakery_suma:,.0f}</strong></td>
-          </tr>
-        '''
-    
+    if bakery_suma>0:
+        for i in bakery_order:
+            tabla_reposteria += f'''
+              <tr style="background-color: #ffffff;">
+                <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['name']+' '+i['description']}</td>
+                <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['amount']}</td>
+                <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${i['total']:,.0f}</td>
+              </tr>
+            '''
+        if tabla_reposteria!='': 
+            tabla_reposteria += f'''
+              <tr style="background-color: #FFFFFF;">
+                <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;"><strong>Total</strong></td>
+                <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;"></td>
+                <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;"><strong>${bakery_suma:,.0f}</strong></td>
+              </tr>
+            '''
+        
     # Adicionales
-    tabla_adicionales = f'''
-      <tr style="background-color: #ffffff;">
-        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">Decoración {paquete_contratado}</td>
-        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${valorpaquete:,.0f}</td>
-      </tr>
-    '''
-    for i in additional_order:
-        tabla_adicionales += f'''
+    tabla_adicionales = ''
+    if additional_suma>0:
+        tabla_adicionales = f'''
           <tr style="background-color: #ffffff;">
-            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['name']}</td>
-            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${i['total']:,.0f}</td>
+            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">Decoración {paquete_contratado}</td>
+            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${valorpaquete:,.0f}</td>
           </tr>
         '''
-    for i in other_expenses:
-        if 'total' in i and i['total']>0:
-            if 'expensestype' in i:
-                if i['expensestype'].lower()=="cliente":
-                    tabla_adicionales += f'''
-                      <tr style="background-color: #ffffff;">
-                        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['name']}</td>
-                        <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${i['total']:,.0f}</td>
-                      </tr>
-                    '''
-    tabla_adicionales += f'''
-      <tr style="background-color: #FFFFFF;">
-        <td style="font-family:{fontfamily};font-size:{fontsize}px; background-color: #FF94F4; border: 1px solid black;"><strong>Total</strong></td>
-        <td style="font-family:{fontfamily};font-size:{fontsize}px; background-color: #FF94F4; border: 1px solid black;"><strong>${valorpaquete+additional_suma+other_expenses_cliente_suma:,.0f}</strong></td>
-      </tr>
-    '''
+        for i in additional_order:
+            tabla_adicionales += f'''
+              <tr style="background-color: #ffffff;">
+                <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['name']}</td>
+                <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${i['total']:,.0f}</td>
+              </tr>
+            '''
+        for i in other_expenses:
+            if 'total' in i and i['total']>0:
+                if 'expensestype' in i:
+                    if i['expensestype'].lower()=="cliente":
+                        tabla_adicionales += f'''
+                          <tr style="background-color: #ffffff;">
+                            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">{i['name']}</td>
+                            <td style="font-family:{fontfamily};font-size:{fontsize}px; border: 1px solid black;">${i['total']:,.0f}</td>
+                          </tr>
+                        '''
+        tabla_adicionales += f'''
+          <tr style="background-color: #FFFFFF;">
+            <td style="font-family:{fontfamily};font-size:{fontsize}px; background-color: #FF94F4; border: 1px solid black;"><strong>Total</strong></td>
+            <td style="font-family:{fontfamily};font-size:{fontsize}px; background-color: #FF94F4; border: 1px solid black;"><strong>${valorpaquete+additional_suma+other_expenses_cliente_suma:,.0f}</strong></td>
+          </tr>
+        '''
       
     # Estado de cuenta
     total_pagos = 0
