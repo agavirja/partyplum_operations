@@ -1633,7 +1633,7 @@ if data.empty is False:
     st.markdown(html_struct, unsafe_allow_html=True)
     
       
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         if st.button('Guardar Datos'):
             with st.spinner("Guardando Datos"):
@@ -1749,11 +1749,10 @@ if data.empty is False:
                                     file_name="resumen_party_plum.pdf",
                                     mime='application/octet-stream')
                 
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button('Eliminar Evento'):
-            checkdelete = st.checkbox("Seguro de eliminar evento?", value=False)
-            if checkdelete:
+    with col3:
+        checkdelete = st.checkbox("Eliminar Evento", value=False)
+        if checkdelete:
+            if st.button('Estoy seguro de eliminar el evento'):
                 with st.spinner("Eliminado evento"):
                     pagos.append({'name':'saldo_pendiente','value':saldo_pendiente,'date':None})
                     pagos.append({'name':'valorpaquete','value':valorpaquete,'date':None})
