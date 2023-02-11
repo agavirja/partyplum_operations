@@ -512,13 +512,6 @@ if checkvalues and data.empty is False:
                 st.write('---')
                 st.markdown('<p style="color: #BA5778;"><strong> Valor por proveedores de orden de compra:</strong><p>', unsafe_allow_html=True)
                 break
-    
-    for i in purchase_order:
-        for j in purchase_paso:
-            if ('id' in i and 'id' in j) and (i['id'] is not None and j['id'] is not None) and int(i['id'])==int(j['id']):
-                if 'provider_by_value' not in i: i['provider_by_value'] = []
-                    i['provider_by_value'] = copy.deepcopy(j['provider_by_value'])
-                    break
                 
     for i in purchase_order:
         if 'providers' in i:
@@ -664,15 +657,7 @@ if checkvalues and data.empty is False:
                 st.write('---')
                 st.markdown('<p style="color: #BA5778;"><strong> Valor por proveedores de impresiones:</strong><p>', unsafe_allow_html=True)
                 break
-    
-    for i in print_order:
-        for j in purchase_paso:
-            if ('id' in i and 'id' in j) and (i['id'] is not None and j['id'] is not None) and int(i['id'])==int(j['id']):
-                if 'provider_by_value' not in i: i['provider_by_value'] = []
-                if 'provider_by_value' in j:
-                    i['provider_by_value'] = copy.deepcopy(j['provider_by_value'])
-                    break
-                
+
     for i in print_order:
         if 'providers' in i:
             if len(i['providers'])>1:
