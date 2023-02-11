@@ -71,12 +71,24 @@ with col2:
     celebratedfilter = st.selectbox('Nombre del celebrado',options=sorted(data_clientes[idd]['celebrated_name'].unique()))
     idd              = (idd) & (data_clientes['celebrated_name']==celebratedfilter)
 
+
 if sum(idd)>0:
     id_event = data_clientes[idd]['id_event'].iloc[0]
     data     = data_event(id_event)
 
 if data.empty is False:
-    st.dataframe(data)
-    
-    
-    
+    st.write('---')
+    datashow = data[['city','address','event_day','start_event','setup_time','date_pick_up','hour_pick_up','img_event']]
+    formato = {'city':'Ciudad','address':'Dirección','event_day':'Fecha del evento','start_event':'Hora de evento','setup_time':'Hora de montaje','date_pick_up':'Fecha de recogida','hour_pick_up':'Hora de recogida'} 
+    conteo  = 0
+    for key,value in formato.items():
+        if conteo % 2 == 0:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.text_input(f'{value}',value=datashow[key].iloc[0])
+        else:
+            with col2:
+                st.text_input(f'{value}',value=datashow[key].iloc[0])           
+        conteo += 1
+        
+    st.image(datashow['img_event'].iloc[0],width=300)
