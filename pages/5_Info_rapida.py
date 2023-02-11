@@ -90,4 +90,4 @@ if data.empty is False:
             with col2:
                 st.text_input(f'{value}',value=datashow[key].iloc[0])           
         conteo += 1
-    st.image(datashow['principal_img'].iloc[0],width=600)
+    st.image(datashow['principal_img'].iloc[0],width=300)
