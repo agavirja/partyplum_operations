@@ -423,10 +423,17 @@ if checkvalues and data.empty is False:
     
     products       = data_products(category='BASIC',id_package=id_package)
     providers      = data_providers(category='BASIC')
-
     purchase_paso  = copy.deepcopy(purchase_origen)
-    purchase_order = []
     
+    products['keep'] = 1
+    purchase_paso    = pd.DataFrame(purchase_paso).merge(products[['id','keep']],on='id',how='left',validate='1:1')
+    purchase_paso    = purchase_paso[purchase_paso['keep']==1]
+    purchase_paso.drop(columns=['keep'],inplace=True)
+    if purchase_paso.empty is False:
+        purchase_paso = purchase_paso.to_dict(orient='records')
+    else: purchase_paso = []
+    
+    purchase_order = []
     idlist         = []
     for i in purchase_paso:
         i['checkitem'] = True
@@ -505,9 +512,17 @@ if checkvalues and data.empty is False:
     products       = data_products(category='PRINT',id_package=id_package)
     providers      = data_providers(category='PRINT')
     print_paso     = copy.deepcopy(purchase_origen)
-    print_order = []
     
-    idlist         = []
+    products['keep'] = 1
+    print_paso    = pd.DataFrame(print_paso).merge(products[['id','keep']],on='id',how='left',validate='1:1')
+    print_paso    = print_paso[print_paso['keep']==1]
+    print_paso.drop(columns=['keep'],inplace=True)
+    if print_paso.empty is False:
+        print_paso = print_paso.to_dict(orient='records')
+    else: print_paso = []
+    
+    print_order = []
+    idlist      = []
     for i in print_paso:
         i['checkitem'] = True
         idlist.append(i['id'])
