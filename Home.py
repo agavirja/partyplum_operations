@@ -136,6 +136,7 @@ if clients.empty is False:
             width: 100%;
             object-fit: cover;
             margin-bottom: 10px; 
+            height: auto;
           }
         </style>
     """

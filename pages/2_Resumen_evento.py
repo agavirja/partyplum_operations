@@ -1769,7 +1769,8 @@ if data.empty is False:
                     data2delete.loc[0,'pagos']            = pd.io.json.dumps(pagos)
                     data2delete.loc[0,'clientdata']       = pd.io.json.dumps(clientdata)
                     data2delete.loc[0,'img_event']        = img_event
-    
+                    
+                    data2delete.loc[0,'available']        = 0
                     # Guardar una copia en datos historicos
                     data2historic              = copy.deepcopy(data2delete)
                     data2historic['id_events'] = id_event
