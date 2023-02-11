@@ -1780,7 +1780,7 @@ if data.empty is False:
                     # Reemplazar datos en la base de datos de eventos
                     db_connection = sql.connect(user=user, password=password, host=host, database=schema)
                     cursor        = db_connection.cursor()
-                    cursor.executemany(f"""UPDATE {schema}.events SET available=0 WHERE id={id_event} """)
+                    cursor.execute(f"""UPDATE {schema}.events SET available=0 WHERE id={id_event} """)
                     db_connection.commit()
                     db_connection.close()
                     
